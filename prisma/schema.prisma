@@ -1,0 +1,252 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==========================================
+// AUTH (géré par better-auth)
+// ==========================================
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean
+  image         String?
+  createdAt     DateTime
+  updatedAt     DateTime
+
+  sessions      Session[]
+  accounts      Account[]
+  workouts      Workout[]
+  cardioSessions UserCardioSession[]
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+}
+
+// ==========================================
+// MUSCULATION
+// ==========================================
+
+model MuscleGroup {
+  id        String     @id @default(cuid())
+  name      String
+  slug      String     @unique
+  image     String
+  exercises Exercise[]
+}
+
+enum Difficulty {
+  DEBUTANT
+  INTERMEDIAIRE
+  AVANCE
+}
+
+model Exercise {
+  id            String      @id @default(cuid())
+  name          String
+  description   String
+  image         String?
+  muscleGroupId String
+  muscleGroup   MuscleGroup @relation(fields: [muscleGroupId], references: [id])
+  difficulty    Difficulty
+  equipment     String?
+
+  workoutExercises WorkoutExercise[]
+}
+
+enum WorkoutStatus {
+  PLANIFIEE
+  EN_COURS
+  TERMINEE
+}
+
+model Workout {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  status      WorkoutStatus @default(PLANIFIEE)
+  scheduledAt DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime      @default(now())
+
+  exercises WorkoutExercise[]
+}
+
+model WorkoutExercise {
+  id            String   @id @default(cuid())
+  workoutId     String
+  workout       Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exerciseId    String
+  exercise      Exercise @relation(fields: [exerciseId], references: [id])
+  order         Int
+  sets          Int
+  reps          Int
+  weight        Float?
+  restSeconds   Int      @default(60)
+  completedSets Int      @default(0)
+}
+
+// ==========================================
+// CARDIO
+// ==========================================
+
+enum CardioLevel {
+  DEBUTANT
+  INTERMEDIAIRE
+  AVANCE
+}
+
+enum Intensity {
+  FAIBLE
+  MOYENNE
+  HAUTE
+}
+
+model CardioProgram {
+  id          String       @id @default(cuid())
+  name        String
+  description String
+  level       CardioLevel
+  durationMin Int
+  type        String
+  calories    Int?
+  image       String?
+
+  steps    CardioStep[]
+  sessions UserCardioSession[]
+}
+
+model CardioStep {
+  id          String        @id @default(cuid())
+  programId   String
+  program     CardioProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  order       Int
+  name        String
+  durationSec Int
+  intensity   Intensity
+}
+
+model UserCardioSession {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  programId   String
+  program     CardioProgram @relation(fields: [programId], references: [id])
+  completedAt DateTime      @default(now())
+  durationMin Int
+}
+
+// ==========================================
+// NUTRITION
+// ==========================================
+
+enum NutritionGoal {
+  PRISE_DE_MASSE
+  SECHE
+  MAINTIEN
+}
+
+enum MealType {
+  PETIT_DEJEUNER
+  DEJEUNER
+  COLLATION
+  DINER
+}
+
+model NutritionPlan {
+  id            String        @id @default(cuid())
+  name          String
+  description   String
+  goal          NutritionGoal
+  dailyCalories Int
+  dailyProtein  Int
+  dailyCarbs    Int
+  dailyFats     Int
+
+  weeks NutritionWeek[]
+}
+
+model NutritionWeek {
+  id         String        @id @default(cuid())
+  planId     String
+  plan       NutritionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  weekNumber Int
+
+  days          NutritionDay[]
+  groceryItems  GroceryItem[]
+}
+
+model NutritionDay {
+  id        String        @id @default(cuid())
+  weekId    String
+  week      NutritionWeek @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  dayNumber Int
+
+  meals Meal[]
+}
+
+model Meal {
+  id          String       @id @default(cuid())
+  dayId       String
+  day         NutritionDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  type        MealType
+  name        String
+  description String?
+  calories    Int
+  protein     Float
+  carbs       Float
+  fats        Float
+}
+
+model GroceryItem {
+  id       String        @id @default(cuid())
+  weekId   String
+  week     NutritionWeek @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  name     String
+  quantity Float
+  unit     String
+  category String
+}
