@@ -13,12 +13,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { isRedirectError } from "next/dist/client/components/redirect-error"
 import { createWorkout } from "../actions"
 
 type ExerciseOption = { id: string; name: string }
 type GroupOption = { id: string; name: string; exercises: ExerciseOption[] }
 
 type WorkoutEntry = {
+  id: string
   exerciseId: string
   exerciseName: string
   sets: number
@@ -53,6 +55,7 @@ export function WorkoutForm({ groups }: { groups: GroupOption[] }) {
     setEntries((prev) => [
       ...prev,
       {
+        id: crypto.randomUUID(),
         exerciseId: exercise.id,
         exerciseName: exercise.name,
         sets,
@@ -85,7 +88,8 @@ export function WorkoutForm({ groups }: { groups: GroupOption[] }) {
         name: workoutName,
         exercises: entries.map((e, i) => ({ ...e, order: i + 1 })),
       })
-    } catch {
+    } catch (err) {
+      if (isRedirectError(err)) throw err
       setError("Une erreur est survenue. Réessayez.")
       setLoading(false)
     }
@@ -220,7 +224,7 @@ export function WorkoutForm({ groups }: { groups: GroupOption[] }) {
           <CardContent className="space-y-2">
             {entries.map((entry, index) => (
               <div
-                key={index}
+                key={entry.id}
                 className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm"
               >
                 <div>
