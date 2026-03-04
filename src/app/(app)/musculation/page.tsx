@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, PlusCircle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { prisma } from "@/lib/prisma"
 
@@ -17,6 +17,28 @@ export default async function MusculationPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {/* Carte Créer une séance */}
+        <Link href="/musculation/seance/nouvelle">
+          <Card className="h-full cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 bg-background/80 backdrop-blur-sm border-dashed border-2">
+            <CardHeader className="pb-3">
+              <div
+                className="w-fit rounded-lg p-2.5 mb-2"
+                style={{ background: "linear-gradient(135deg, #3F5EFB, #F50535)" }}
+              >
+                <PlusCircle className="h-6 w-6 text-white" />
+              </div>
+              <CardTitle className="text-lg">Créer une séance</CardTitle>
+              <p className="text-sm text-muted-foreground">Composez votre entraînement sur mesure</p>
+            </CardHeader>
+            <CardContent>
+              <span className="flex items-center gap-1 text-sm font-medium" style={{ color: "#3F5EFB" }}>
+                Commencer <ArrowRight className="h-4 w-4" />
+              </span>
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* Groupes musculaires */}
         {groups.map((group) => (
           <Link key={group.id} href={`/musculation/${group.slug}`}>
             <Card className="h-full cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 bg-background/80 backdrop-blur-sm">
