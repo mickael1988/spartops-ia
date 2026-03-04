@@ -26,7 +26,7 @@ const muscleGroups = [
   { name: "Triceps", slug: "triceps", image: "/groups/triceps.png" },
   { name: "Abdominaux", slug: "abdominaux", image: "/groups/abdominaux.png" },
   { name: "Jambes", slug: "jambes", image: "/groups/Jambes.png" },
-  { name: "Fessiers", slug: "fessiers", image: "🍑" },
+  { name: "Fessiers", slug: "fessiers", image: "/groups/fessiers.png" },
 ]
 
 const exercises = [
