@@ -29,11 +29,7 @@ export default function RegisterPage() {
     setError("")
     setLoading(true)
 
-    const result = await signUp.email({
-      name,
-      email,
-      password,
-    })
+    const result = await signUp.email({ name, email, password })
 
     if (result.error) {
       setError(result.error.message ?? "Une erreur est survenue lors de l'inscription.")
@@ -96,12 +92,17 @@ export default function RegisterPage() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-3">
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button
+            type="submit"
+            className="w-full border-0 text-white"
+            style={{ background: "linear-gradient(to right, #3F5EFB, #F50535)" }}
+            disabled={loading}
+          >
             {loading ? "Création du compte..." : "Créer mon compte"}
           </Button>
           <p className="text-sm text-muted-foreground text-center">
             Déjà un compte ?{" "}
-            <Link href="/login" className="text-primary hover:underline">
+            <Link href="/login" className="font-medium hover:underline" style={{ color: "#3F5EFB" }}>
               Se connecter
             </Link>
           </p>
