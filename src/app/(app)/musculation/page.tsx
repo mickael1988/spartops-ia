@@ -21,7 +21,7 @@ export default async function MusculationPage() {
           <Link key={group.id} href={`/musculation/${group.slug}`}>
             <Card className="h-full cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 bg-background/80 backdrop-blur-sm">
               <CardHeader className="pb-3">
-                <div className="text-4xl mb-2">{group.image}</div>
+                <div className="text-4xl mb-2" aria-hidden="true">{group.image}</div>
                 <CardTitle className="text-lg">{group.name}</CardTitle>
                 <p className="text-sm text-muted-foreground">{group._count.exercises} exercices</p>
               </CardHeader>
