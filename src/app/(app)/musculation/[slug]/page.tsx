@@ -39,7 +39,9 @@ export default async function MuscleGroupPage({
       {/* En-tête */}
       <div>
         <div className="flex items-center gap-3">
-          <span className="text-4xl" aria-hidden="true">{group.image}</span>
+          {group.image.startsWith("/")
+            ? <img src={group.image} alt="" aria-hidden="true" className="h-10 w-10 object-contain" />
+            : <span className="text-4xl" aria-hidden="true">{group.image}</span>}
           <h1 className="text-3xl font-bold">{group.name}</h1>
         </div>
         <p className="text-muted-foreground mt-1">{group.exercises.length} exercices disponibles</p>

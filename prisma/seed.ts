@@ -19,7 +19,7 @@ const adapter = new PrismaPg({ connectionString })
 const prisma = new PrismaClient({ adapter })
 
 const muscleGroups = [
-  { name: "Pectoraux", slug: "pectoraux", image: "💪" },
+  { name: "Pectoraux", slug: "pectoraux", image: "/groups/pectoraux.png" },
   { name: "Dos", slug: "dos", image: "🔙" },
   { name: "Épaules", slug: "epaules", image: "🏔️" },
   { name: "Biceps", slug: "biceps", image: "💪" },
