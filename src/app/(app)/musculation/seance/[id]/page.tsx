@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { ChevronRight } from "lucide-react"
 import { headers } from "next/headers"
 import { auth } from "@/lib/auth"
@@ -14,9 +14,10 @@ export default async function WorkoutDetailPage({
 }) {
   const { id } = await params
   const session = await auth.api.getSession({ headers: await headers() })
+  if (!session) redirect("/login")
 
   const workout = await prisma.workout.findFirst({
-    where: { id, userId: session!.user.id },
+    where: { id, userId: session.user.id },
     include: {
       exercises: {
         include: { exercise: true },
@@ -31,7 +32,7 @@ export default async function WorkoutDetailPage({
     PLANIFIEE: "Planifiée",
     EN_COURS: "En cours",
     TERMINEE: "Terminée",
-  }[workout.status]
+  }[workout.status] ?? workout.status
 
   return (
     <div className="space-y-6">
