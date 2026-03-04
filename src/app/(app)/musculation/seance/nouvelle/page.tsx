@@ -1,9 +1,15 @@
 import Link from "next/link"
 import { ChevronRight } from "lucide-react"
+import { redirect } from "next/navigation"
+import { headers } from "next/headers"
+import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { WorkoutForm } from "./workout-form"
 
 export default async function NouvelleSéancePage() {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session) redirect("/login")
+
   const groups = await prisma.muscleGroup.findMany({
     include: { exercises: { select: { id: true, name: true }, orderBy: { name: "asc" } } },
     orderBy: { name: "asc" },

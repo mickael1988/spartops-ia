@@ -24,11 +24,17 @@ export async function createWorkout(data: CreateWorkoutInput): Promise<void> {
   if (!session) throw new Error("Non authentifié")
 
   if (!data.name.trim()) throw new Error("Le nom de la séance est requis")
+  if (data.name.trim().length > 100) throw new Error("Nom trop long (max 100 caractères)")
   if (data.exercises.length === 0) throw new Error("Ajoutez au moins un exercice")
+  if (data.exercises.length > 30) throw new Error("Maximum 30 exercices par séance")
+
+  const exerciseIds = data.exercises.map((ex) => ex.exerciseId)
+  const uniqueIds = new Set(exerciseIds)
+  if (uniqueIds.size !== exerciseIds.length) throw new Error("Exercices en double détectés")
 
   // Validation des valeurs numériques
   for (const ex of data.exercises) {
-    if (ex.sets < 1 || ex.reps < 1 || ex.order < 1 || ex.restSeconds < 0) {
+    if (ex.sets < 1 || ex.reps < 1 || ex.order < 1 || ex.restSeconds < 0 || ex.sets > 20 || ex.reps > 100 || ex.restSeconds > 600) {
       throw new Error("Valeurs d'exercice invalides")
     }
     if (ex.weight !== null && ex.weight < 0) {
@@ -37,7 +43,6 @@ export async function createWorkout(data: CreateWorkoutInput): Promise<void> {
   }
 
   // Validation que tous les exerciceId existent en base
-  const exerciseIds = data.exercises.map((ex) => ex.exerciseId)
   const foundExercises = await prisma.exercise.findMany({
     where: { id: { in: exerciseIds } },
     select: { id: true },
@@ -67,7 +72,8 @@ export async function createWorkout(data: CreateWorkoutInput): Promise<void> {
       },
     })
     workoutId = workout.id
-  } catch {
+  } catch (err) {
+    console.error("[createWorkout]", err)
     throw new Error("Erreur lors de la création de la séance")
   }
 

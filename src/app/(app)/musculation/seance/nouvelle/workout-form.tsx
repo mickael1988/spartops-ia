@@ -52,6 +52,7 @@ export function WorkoutForm({ groups }: { groups: GroupOption[] }) {
   function handleAddExercise() {
     const exercise = filteredExercises.find((e) => e.id === selectedExerciseId)
     if (!exercise) return
+    const parsedWeight = weight !== "" ? parseFloat(weight) : null
     setEntries((prev) => [
       ...prev,
       {
@@ -60,7 +61,7 @@ export function WorkoutForm({ groups }: { groups: GroupOption[] }) {
         exerciseName: exercise.name,
         sets,
         reps,
-        weight: weight !== "" ? parseFloat(weight) : null,
+        weight: parsedWeight !== null && isFinite(parsedWeight) ? parsedWeight : null,
         restSeconds,
       },
     ])
