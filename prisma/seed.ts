@@ -20,12 +20,12 @@ const prisma = new PrismaClient({ adapter })
 
 const muscleGroups = [
   { name: "Pectoraux", slug: "pectoraux", image: "/groups/pectoraux.png" },
-  { name: "Dos", slug: "dos", image: "🔙" },
-  { name: "Épaules", slug: "epaules", image: "🏔️" },
-  { name: "Biceps", slug: "biceps", image: "💪" },
-  { name: "Triceps", slug: "triceps", image: "🦾" },
-  { name: "Abdominaux", slug: "abdominaux", image: "🎯" },
-  { name: "Jambes", slug: "jambes", image: "🦵" },
+  { name: "Dos", slug: "dos", image: "/groups/dos.png" },
+  { name: "Épaules", slug: "epaules", image: "/groups/epaule.png" },
+  { name: "Biceps", slug: "biceps", image: "/groups/biceps.png" },
+  { name: "Triceps", slug: "triceps", image: "/groups/triceps.png" },
+  { name: "Abdominaux", slug: "abdominaux", image: "/groups/abdominaux.png" },
+  { name: "Jambes", slug: "jambes", image: "/groups/Jambes.png" },
   { name: "Fessiers", slug: "fessiers", image: "🍑" },
 ]
 
