@@ -27,6 +27,9 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
   const [validating, setValidating] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [restActive, setRestActive] = useState(false)
+  const [restRemaining, setRestRemaining] = useState(0)
+  const restRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     if (!started) return
@@ -36,12 +39,57 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
     }
   }, [started])
 
+  useEffect(() => () => { if (restRef.current) clearInterval(restRef.current) }, [])
+
   function formatTime(seconds: number): string {
     const h = Math.floor(seconds / 3600)
     const m = Math.floor((seconds % 3600) / 60)
     const s = seconds % 60
     if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
+  }
+
+  function triggerRestEnd() {
+    if ("vibrate" in navigator) {
+      navigator.vibrate([200, 100, 200])
+    }
+    try {
+      const ctx = new AudioContext()
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.frequency.value = 880
+      gain.gain.setValueAtTime(0.3, ctx.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5)
+      osc.start(ctx.currentTime)
+      osc.stop(ctx.currentTime + 0.5)
+    } catch {
+      // AudioContext non supporté
+    }
+  }
+
+  function startRest(seconds: number) {
+    if (restRef.current) clearInterval(restRef.current)
+    setRestRemaining(seconds)
+    setRestActive(true)
+    restRef.current = setInterval(() => {
+      setRestRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(restRef.current!)
+          setRestActive(false)
+          triggerRestEnd()
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+  }
+
+  function stopRest() {
+    if (restRef.current) clearInterval(restRef.current)
+    setRestActive(false)
+    setRestRemaining(0)
   }
 
   const current = workout.exercises[exerciseIndex]
@@ -69,6 +117,7 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
     try {
       await completeSet(current.id)
       setCompletedSetsMap((prev) => ({ ...prev, [current.id]: done + 1 }))
+      startRest(current.restSeconds)
     } finally {
       setValidating(false)
     }
@@ -177,6 +226,36 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
           ))}
         </div>
       </div>
+
+      {/* Chrono repos */}
+      {restActive && (
+        <div className="rounded-2xl border-2 border-blue-300 bg-blue-50 dark:bg-blue-900/20 p-5 space-y-3 text-center">
+          <p className="text-sm font-medium text-blue-600 dark:text-blue-300">😴 Temps de repos</p>
+          <p className="text-5xl font-mono font-bold text-blue-700 dark:text-blue-200">
+            {formatTime(restRemaining)}
+          </p>
+          <div className="flex gap-2 justify-center">
+            <button
+              onClick={() => setRestRemaining((r) => r + 15)}
+              className="rounded-lg border border-blue-300 px-3 py-1.5 text-sm font-medium text-blue-600"
+            >
+              +15s
+            </button>
+            <button
+              onClick={() => startRest(current.restSeconds)}
+              className="rounded-lg border border-blue-300 px-3 py-1.5 text-sm font-medium text-blue-600"
+            >
+              Reset
+            </button>
+            <button
+              onClick={stopRest}
+              className="rounded-lg border border-blue-300 px-3 py-1.5 text-sm font-medium text-blue-600"
+            >
+              Passer
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Navigation */}
       <div className="flex gap-3">
