@@ -31,7 +31,8 @@ export function CartBar() {
         </span>
         <button
           onClick={clear}
-          className="text-xs text-muted-foreground hover:text-foreground px-3 py-2 rounded-lg border"
+          disabled={loading}
+          className="text-xs text-muted-foreground hover:text-foreground px-3 py-2 rounded-lg border disabled:opacity-60"
         >
           × Vider
         </button>
