@@ -11,9 +11,17 @@ export default async function MusculationPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Musculation</h1>
-        <p className="text-muted-foreground mt-1">Choisissez un groupe musculaire</p>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-3xl font-bold">Musculation</h1>
+          <p className="text-muted-foreground mt-1">Choisissez un groupe musculaire</p>
+        </div>
+        <Link
+          href="/musculation/historique"
+          className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Historique <ArrowRight className="h-4 w-4" />
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
