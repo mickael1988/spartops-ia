@@ -15,34 +15,42 @@ type WorkoutWithExercises = Workout & {
 
 export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
   const [started, setStarted] = useState(workout.status === "EN_COURS")
-  const [exerciseIndex, setExerciseIndex] = useState(0)
+  const [starting, setStarting] = useState(false)
+  const [finishing, setFinishing] = useState(false)
+  const [validatingId, setValidatingId] = useState<string | null>(null)
   const [completedSetsMap, setCompletedSetsMap] = useState<Record<string, number>>(
     Object.fromEntries(workout.exercises.map((we) => [we.id, we.completedSets]))
   )
-  const [repsMap, setRepsMap] = useState<Record<string, number>>(
-    Object.fromEntries(workout.exercises.map((we) => [we.id, we.reps]))
-  )
-  const [weightMap, setWeightMap] = useState<Record<string, number | null>>(
-    Object.fromEntries(workout.exercises.map((we) => [we.id, we.weight]))
-  )
-  const router = useRouter()
-  const [finishing, setFinishing] = useState(false)
-  const [starting, setStarting] = useState(false)
-  const [validating, setValidating] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [restActive, setRestActive] = useState(false)
   const [restRemaining, setRestRemaining] = useState(0)
+  const [restForId, setRestForId] = useState<string | null>(null)
   const restRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const exerciseRefs = useRef<(HTMLDivElement | null)[]>([])
+  const router = useRouter()
 
+  // Premier exercice non terminé
+  const activeIndex = workout.exercises.findIndex(
+    (we) => (completedSetsMap[we.id] ?? 0) < we.sets
+  )
+  const allDone = activeIndex === -1
+
+  // Auto-scroll vers l'exercice actif
+  useEffect(() => {
+    if (activeIndex >= 0) {
+      exerciseRefs.current[activeIndex]?.scrollIntoView({ behavior: "smooth", block: "center" })
+    }
+  }, [activeIndex])
+
+  // Chrono total
   useEffect(() => {
     if (!started) return
     timerRef.current = setInterval(() => setElapsedSeconds((s) => s + 1), 1000)
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [started])
 
+  // Cleanup chrono repos
   useEffect(() => () => { if (restRef.current) clearInterval(restRef.current) }, [])
 
   function formatTime(seconds: number): string {
@@ -54,9 +62,7 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
   }
 
   function triggerRestEnd() {
-    if ("vibrate" in navigator) {
-      navigator.vibrate([200, 100, 200])
-    }
+    if ("vibrate" in navigator) navigator.vibrate([200, 100, 200])
     try {
       const ctx = new AudioContext()
       const osc = ctx.createOscillator()
@@ -73,15 +79,17 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
     }
   }
 
-  function startRest(seconds: number) {
+  function startRest(seconds: number, weId: string) {
     if (restRef.current) clearInterval(restRef.current)
     setRestRemaining(seconds)
     setRestActive(true)
+    setRestForId(weId)
     restRef.current = setInterval(() => {
       setRestRemaining((prev) => {
         if (prev <= 1) {
           clearInterval(restRef.current!)
           setRestActive(false)
+          setRestForId(null)
           triggerRestEnd()
           return 0
         }
@@ -94,11 +102,8 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
     if (restRef.current) clearInterval(restRef.current)
     setRestActive(false)
     setRestRemaining(0)
+    setRestForId(null)
   }
-
-  const current = workout.exercises[exerciseIndex]
-  const totalExercises = workout.exercises.length
-  const isLast = exerciseIndex === totalExercises - 1
 
   async function handleStart() {
     setStarting(true)
@@ -108,14 +113,6 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
     } finally {
       setStarting(false)
     }
-  }
-
-  function handleNext() {
-    if (!isLast) setExerciseIndex((i) => i + 1)
-  }
-
-  function handlePrev() {
-    if (exerciseIndex > 0) setExerciseIndex((i) => i - 1)
   }
 
   async function handleFinish() {
@@ -128,17 +125,17 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
     }
   }
 
-  async function handleCompleteSet() {
-    if (validating) return
-    const done = completedSetsMap[current.id] ?? 0
-    if (done >= current.sets) return
-    setValidating(true)
+  async function handleCompleteSet(we: ExerciseWithRelations) {
+    if (validatingId) return
+    const done = completedSetsMap[we.id] ?? 0
+    if (done >= we.sets) return
+    setValidatingId(we.id)
     try {
-      await completeSet(current.id)
-      setCompletedSetsMap((prev) => ({ ...prev, [current.id]: done + 1 }))
-      startRest(current.restSeconds)
+      await completeSet(we.id)
+      setCompletedSetsMap((prev) => ({ ...prev, [we.id]: done + 1 }))
+      startRest(we.restSeconds, we.id)
     } finally {
-      setValidating(false)
+      setValidatingId(null)
     }
   }
 
@@ -146,7 +143,9 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
         <h1 className="text-2xl font-bold text-center">{workout.name}</h1>
-        <p className="text-muted-foreground">{totalExercises} exercice{totalExercises > 1 ? "s" : ""}</p>
+        <p className="text-muted-foreground">
+          {workout.exercises.length} exercice{workout.exercises.length > 1 ? "s" : ""}
+        </p>
         <button
           onClick={handleStart}
           disabled={starting}
@@ -160,142 +159,121 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
   }
 
   return (
-    <div className="space-y-4 max-w-lg mx-auto pb-8">
-      {/* Header : progression */}
-      <div className="flex items-center justify-between text-sm text-muted-foreground pt-2">
-        <span>Exercice {exerciseIndex + 1} / {totalExercises}</span>
-        <span className="font-mono font-bold text-base text-foreground">⏱ {formatTime(elapsedSeconds)}</span>
+    <div className="space-y-4 max-w-lg mx-auto pb-24">
+      {/* Header sticky */}
+      <div className="sticky top-0 z-10 flex items-center justify-between py-3 bg-background/80 backdrop-blur-sm text-sm text-muted-foreground">
+        <span>
+          {allDone
+            ? "✅ Tous les exercices terminés"
+            : `Exercice ${activeIndex + 1} / ${workout.exercises.length}`}
+        </span>
+        <span className="font-mono font-bold text-base text-foreground">
+          ⏱ {formatTime(elapsedSeconds)}
+        </span>
       </div>
 
-      {/* Exercice actif */}
-      <div className="rounded-2xl border bg-background/80 backdrop-blur-sm p-6 space-y-5">
-        <p className="text-xs text-muted-foreground uppercase tracking-wide">
-          {current.exercise.muscleGroup.name}
-        </p>
-        <h2 className="text-2xl font-bold">{current.exercise.name}</h2>
-        <p className="text-5xl text-center py-2" aria-hidden="true">
-          {current.exercise.image ?? "🏋️"}
-        </p>
+      {/* Liste complète des exercices */}
+      {workout.exercises.map((we, index) => {
+        const done = completedSetsMap[we.id] ?? 0
+        const isCompleted = done >= we.sets
+        const isActive = index === activeIndex
 
-        {/* Série en cours */}
-        <p className="text-center text-sm font-medium text-muted-foreground">
-          Série {Math.min((completedSetsMap[current.id] ?? 0) + 1, current.sets)} / {current.sets}
-        </p>
-
-        {/* Inputs reps / poids (display-only, aide-mémoire pour l'utilisateur) */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Répétitions</label>
-            <input
-              type="number"
-              min={1}
-              max={100}
-              value={repsMap[current.id]}
-              onChange={(e) =>
-                setRepsMap((prev) => ({ ...prev, [current.id]: Math.max(1, parseInt(e.target.value) || 1) }))
-              }
-              className="w-full rounded-xl border bg-background px-3 py-3 text-center text-2xl font-bold"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Poids (kg)</label>
-            <input
-              type="number"
-              min={0}
-              step={0.5}
-              value={weightMap[current.id] ?? ""}
-              placeholder="—"
-              onChange={(e) =>
-                setWeightMap((prev) => ({
-                  ...prev,
-                  [current.id]: e.target.value === "" ? null : parseFloat(e.target.value),
-                }))
-              }
-              className="w-full rounded-xl border bg-background px-3 py-3 text-center text-2xl font-bold"
-            />
-          </div>
-        </div>
-
-        {/* Bouton valider */}
-        {(completedSetsMap[current.id] ?? 0) < current.sets ? (
-          <button
-            onClick={handleCompleteSet}
-            disabled={validating}
-            className="w-full rounded-2xl py-5 text-xl font-bold text-white disabled:opacity-60"
-            style={{ background: "linear-gradient(to right, #3F5EFB, #F50535)" }}
+        return (
+          <div
+            key={we.id}
+            ref={(el) => { exerciseRefs.current[index] = el }}
+            className={`rounded-2xl border p-5 space-y-4 transition-all ${
+              isCompleted
+                ? "opacity-50 bg-background/40"
+                : isActive
+                ? "border-primary bg-background/80 backdrop-blur-sm shadow-sm"
+                : "opacity-60 bg-background/40"
+            }`}
           >
-            {validating ? "Enregistrement…" : "✓  Valider la série"}
-          </button>
-        ) : (
-          <div className="w-full rounded-2xl py-4 text-center font-bold text-green-600 bg-green-50 dark:bg-green-900/20">
-            Exercice terminé !
+            {/* En-tête */}
+            <div className="flex items-center gap-3">
+              <span className="text-3xl" aria-hidden="true">{we.exercise.image ?? "🏋️"}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                  {we.exercise.muscleGroup.name}
+                </p>
+                <h3 className="font-bold text-lg leading-tight">{we.exercise.name}</h3>
+              </div>
+              {isCompleted && <span className="text-green-500 text-xl" aria-label="Terminé">✅</span>}
+            </div>
+
+            {/* Résumé rapide (non actif) */}
+            {!isActive && (
+              <p className="text-sm text-muted-foreground">
+                {isCompleted
+                  ? `${we.sets} séries terminées`
+                  : `${we.sets} séries × ${we.reps} rép${we.weight ? ` · ${we.weight} kg` : ""}`}
+              </p>
+            )}
+
+            {/* Contenu interactif (exercice actif uniquement) */}
+            {isActive && (
+              <>
+                <p className="text-center text-sm font-medium text-muted-foreground">
+                  Série {Math.min(done + 1, we.sets)} / {we.sets}
+                </p>
+
+                {done < we.sets ? (
+                  <button
+                    onClick={() => handleCompleteSet(we)}
+                    disabled={validatingId === we.id}
+                    className="w-full rounded-2xl py-4 text-lg font-bold text-white disabled:opacity-60"
+                    style={{ background: "linear-gradient(to right, #3F5EFB, #F50535)" }}
+                  >
+                    {validatingId === we.id ? "Enregistrement…" : "✓ Valider la série"}
+                  </button>
+                ) : (
+                  <div className="w-full rounded-2xl py-3 text-center font-bold text-green-600 bg-green-50 dark:bg-green-900/20">
+                    ✅ Exercice terminé !
+                  </div>
+                )}
+
+                {/* Dots séries */}
+                <div className="flex justify-center gap-2">
+                  {Array.from({ length: we.sets }).map((_, i) => (
+                    <span
+                      key={i}
+                      className={`h-3 w-3 rounded-full ${i < done ? "bg-primary" : "bg-muted"}`}
+                    />
+                  ))}
+                </div>
+
+                {/* Chrono repos */}
+                {restActive && restForId === we.id && (
+                  <div className="rounded-2xl border-2 border-blue-300 bg-blue-50 dark:bg-blue-900/20 p-4 space-y-3 text-center">
+                    <p className="text-sm font-medium text-blue-600 dark:text-blue-300">😴 Temps de repos</p>
+                    <p className="text-4xl font-mono font-bold text-blue-700 dark:text-blue-200">
+                      {formatTime(restRemaining)}
+                    </p>
+                    <div className="flex gap-2 justify-center">
+                      <button
+                        onClick={() => setRestRemaining((r) => r + 15)}
+                        className="rounded-lg border border-blue-300 px-3 py-1.5 text-sm font-medium text-blue-600"
+                      >+15s</button>
+                      <button
+                        onClick={() => startRest(we.restSeconds, we.id)}
+                        className="rounded-lg border border-blue-300 px-3 py-1.5 text-sm font-medium text-blue-600"
+                      >Reset</button>
+                      <button
+                        onClick={stopRest}
+                        className="rounded-lg border border-blue-300 px-3 py-1.5 text-sm font-medium text-blue-600"
+                      >Passer</button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
-        )}
+        )
+      })}
 
-        {/* Dots séries */}
-        <div className="flex justify-center gap-2 pt-1">
-          {Array.from({ length: current.sets }).map((_, i) => (
-            <span
-              key={i}
-              className={`h-3 w-3 rounded-full ${
-                i < (completedSetsMap[current.id] ?? 0)
-                  ? "bg-primary"
-                  : "bg-muted"
-              }`}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Chrono repos */}
-      {restActive && (
-        <div className="rounded-2xl border-2 border-blue-300 bg-blue-50 dark:bg-blue-900/20 p-5 space-y-3 text-center">
-          <p className="text-sm font-medium text-blue-600 dark:text-blue-300">😴 Temps de repos</p>
-          <p className="text-5xl font-mono font-bold text-blue-700 dark:text-blue-200">
-            {formatTime(restRemaining)}
-          </p>
-          <div className="flex gap-2 justify-center">
-            <button
-              onClick={() => setRestRemaining((r) => r + 15)}
-              className="rounded-lg border border-blue-300 px-3 py-1.5 text-sm font-medium text-blue-600"
-            >
-              +15s
-            </button>
-            <button
-              onClick={() => startRest(current.restSeconds)}
-              className="rounded-lg border border-blue-300 px-3 py-1.5 text-sm font-medium text-blue-600"
-            >
-              Reset
-            </button>
-            <button
-              onClick={stopRest}
-              className="rounded-lg border border-blue-300 px-3 py-1.5 text-sm font-medium text-blue-600"
-            >
-              Passer
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Navigation */}
-      <div className="flex gap-3">
-        <button
-          onClick={handlePrev}
-          disabled={exerciseIndex === 0}
-          className="flex-1 rounded-xl border py-3 font-medium disabled:opacity-30"
-        >
-          ← Préc.
-        </button>
-        <button
-          onClick={handleNext}
-          disabled={isLast}
-          className="flex-1 rounded-xl border py-3 font-medium disabled:opacity-30"
-        >
-          Suiv. →
-        </button>
-      </div>
-
-      {isLast && (completedSetsMap[current.id] ?? 0) >= current.sets && (
+      {/* Bouton terminer — visible quand tout est fait */}
+      {allDone && (
         <button
           onClick={handleFinish}
           disabled={finishing}
