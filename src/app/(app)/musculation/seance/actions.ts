@@ -79,3 +79,48 @@ export async function createWorkout(data: CreateWorkoutInput): Promise<void> {
 
   redirect(`/musculation/seance/${workoutId}`)
 }
+
+export async function startWorkout(workoutId: string): Promise<void> {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session) throw new Error("Non authentifié")
+
+  await prisma.workout.updateMany({
+    where: { id: workoutId, userId: session.user.id, status: "PLANIFIEE" },
+    data: { status: "EN_COURS", startedAt: new Date() },
+  })
+}
+
+export async function completeSet(
+  workoutExerciseId: string,
+  actualReps: number,
+  actualWeight: number | null
+): Promise<void> {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session) throw new Error("Non authentifié")
+
+  const we = await prisma.workoutExercise.findFirst({
+    where: { id: workoutExerciseId, workout: { userId: session.user.id } },
+    select: { completedSets: true, sets: true },
+  })
+  if (!we) throw new Error("Exercice introuvable")
+  if (we.completedSets >= we.sets) return
+
+  await prisma.workoutExercise.update({
+    where: { id: workoutExerciseId },
+    data: {
+      completedSets: { increment: 1 },
+      reps: actualReps,
+      weight: actualWeight,
+    },
+  })
+}
+
+export async function finishWorkout(workoutId: string): Promise<void> {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session) throw new Error("Non authentifié")
+
+  await prisma.workout.updateMany({
+    where: { id: workoutId, userId: session.user.id },
+    data: { status: "TERMINEE", completedAt: new Date() },
+  })
+}
