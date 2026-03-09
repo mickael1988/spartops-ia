@@ -157,17 +157,20 @@ export async function buildAndStartWorkout(exerciseIds: string[]): Promise<void>
   if (exerciseIds.length === 0) throw new Error("Aucun exercice sélectionné")
   if (exerciseIds.length > 30) throw new Error("Maximum 30 exercices par séance")
 
+  const uniqueIds = [...new Set(exerciseIds)]
+  if (uniqueIds.length !== exerciseIds.length) throw new Error("Exercices en double détectés")
+
   const found = await prisma.exercise.findMany({
-    where: { id: { in: exerciseIds } },
+    where: { id: { in: uniqueIds } },
     select: { id: true, name: true },
   })
-  if (found.length !== exerciseIds.length) throw new Error("Exercice(s) invalide(s)")
+  if (found.length !== uniqueIds.length) throw new Error("Exercice(s) invalide(s)")
 
   const name = found.length === 1
     ? found[0].name
     : `Séance du ${new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}`
 
-  const orderedExercises = exerciseIds.map((id, index) => {
+  const orderedExercises = uniqueIds.map((id, index) => {
     const ex = found.find((f) => f.id === id)!
     return { exerciseId: ex.id, order: index + 1 }
   })

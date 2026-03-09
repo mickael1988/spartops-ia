@@ -16,7 +16,6 @@ export function CartBar() {
     setLoading(true)
     try {
       await buildAndStartWorkout(items.map((i) => i.id))
-      clear()
     } catch (err) {
       if (isRedirectError(err)) throw err
       setLoading(false)

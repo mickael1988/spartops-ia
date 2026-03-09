@@ -1,9 +1,15 @@
 import Link from "next/link"
+import { redirect } from "next/navigation"
+import { headers } from "next/headers"
 import { ArrowRight, PlusCircle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/lib/auth"
 
 export default async function MusculationPage() {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session) redirect("/login")
+
   const groups = await prisma.muscleGroup.findMany({
     include: { _count: { select: { exercises: true } } },
     orderBy: { name: "asc" },
