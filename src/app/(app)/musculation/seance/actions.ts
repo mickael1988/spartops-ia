@@ -150,6 +150,57 @@ export async function quickStartWorkout(exerciseId: string): Promise<void> {
   redirect(`/musculation/seance/${workoutId}/live`)
 }
 
+export async function buildAndStartWorkout(exerciseIds: string[]): Promise<void> {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session) throw new Error("Non authentifié")
+
+  if (exerciseIds.length === 0) throw new Error("Aucun exercice sélectionné")
+  if (exerciseIds.length > 30) throw new Error("Maximum 30 exercices par séance")
+
+  const found = await prisma.exercise.findMany({
+    where: { id: { in: exerciseIds } },
+    select: { id: true, name: true },
+  })
+  if (found.length !== exerciseIds.length) throw new Error("Exercice(s) invalide(s)")
+
+  const name = found.length === 1
+    ? found[0].name
+    : `Séance du ${new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}`
+
+  const orderedExercises = exerciseIds.map((id, index) => {
+    const ex = found.find((f) => f.id === id)!
+    return { exerciseId: ex.id, order: index + 1 }
+  })
+
+  let workoutId: string
+  try {
+    const workout = await prisma.workout.create({
+      data: {
+        name,
+        userId: session.user.id,
+        status: "EN_COURS",
+        startedAt: new Date(),
+        exercises: {
+          create: orderedExercises.map((ex) => ({
+            exerciseId: ex.exerciseId,
+            order: ex.order,
+            sets: 3,
+            reps: 10,
+            weight: null,
+            restSeconds: 60,
+          })),
+        },
+      },
+    })
+    workoutId = workout.id
+  } catch (err) {
+    console.error("[buildAndStartWorkout]", err)
+    throw new Error("Erreur lors de la création de la séance")
+  }
+
+  redirect(`/musculation/seance/${workoutId}/live`)
+}
+
 export async function finishWorkout(workoutId: string): Promise<void> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session) throw new Error("Non authentifié")
