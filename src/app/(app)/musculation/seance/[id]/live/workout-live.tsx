@@ -27,6 +27,7 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
   )
   const router = useRouter()
   const [finishing, setFinishing] = useState(false)
+  const [starting, setStarting] = useState(false)
   const [validating, setValidating] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -100,8 +101,13 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
   const isLast = exerciseIndex === totalExercises - 1
 
   async function handleStart() {
-    await startWorkout(workout.id)
-    setStarted(true)
+    setStarting(true)
+    try {
+      await startWorkout(workout.id)
+      setStarted(true)
+    } finally {
+      setStarting(false)
+    }
   }
 
   function handleNext() {
@@ -114,8 +120,12 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
 
   async function handleFinish() {
     setFinishing(true)
-    await finishWorkout(workout.id)
-    router.push(`/musculation/seance/${workout.id}`)
+    try {
+      await finishWorkout(workout.id)
+      router.push(`/musculation/seance/${workout.id}`)
+    } catch {
+      setFinishing(false)
+    }
   }
 
   async function handleCompleteSet() {
@@ -139,10 +149,11 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
         <p className="text-muted-foreground">{totalExercises} exercice{totalExercises > 1 ? "s" : ""}</p>
         <button
           onClick={handleStart}
-          className="w-full max-w-sm rounded-2xl py-5 text-xl font-bold text-white"
+          disabled={starting}
+          className="w-full max-w-sm rounded-2xl py-5 text-xl font-bold text-white disabled:opacity-60"
           style={{ background: "linear-gradient(to right, #3F5EFB, #F50535)" }}
         >
-          Démarrer la séance
+          {starting ? "Démarrage…" : "Démarrer la séance"}
         </button>
       </div>
     )
