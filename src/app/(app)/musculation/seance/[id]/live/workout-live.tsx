@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { startWorkout, completeSet } from "../../actions"
+import { useRouter } from "next/navigation"
+import { startWorkout, completeSet, finishWorkout } from "../../actions"
 import type { Workout, WorkoutExercise, Exercise, MuscleGroup } from "@/generated/prisma/client"
 
 type ExerciseWithRelations = WorkoutExercise & {
@@ -24,6 +25,8 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
   const [weightMap, setWeightMap] = useState<Record<string, number | null>>(
     Object.fromEntries(workout.exercises.map((we) => [we.id, we.weight]))
   )
+  const router = useRouter()
+  const [finishing, setFinishing] = useState(false)
   const [validating, setValidating] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -107,6 +110,12 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
 
   function handlePrev() {
     if (exerciseIndex > 0) setExerciseIndex((i) => i - 1)
+  }
+
+  async function handleFinish() {
+    setFinishing(true)
+    await finishWorkout(workout.id)
+    router.push(`/musculation/seance/${workout.id}`)
   }
 
   async function handleCompleteSet() {
@@ -274,6 +283,17 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
           Suiv. →
         </button>
       </div>
+
+      {isLast && (completedSetsMap[current.id] ?? 0) >= current.sets && (
+        <button
+          onClick={handleFinish}
+          disabled={finishing}
+          className="w-full rounded-2xl py-5 text-xl font-bold text-white disabled:opacity-60"
+          style={{ background: "linear-gradient(135deg, #11998e, #38ef7d)" }}
+        >
+          {finishing ? "Enregistrement…" : "🏁 Terminer la séance"}
+        </button>
+      )}
     </div>
   )
 }

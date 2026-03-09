@@ -55,6 +55,16 @@ export default async function WorkoutDetailPage({
 
       <p className="text-muted-foreground">{workout.exercises.length} exercice{workout.exercises.length > 1 ? "s" : ""}</p>
 
+      {workout.status !== "TERMINEE" && (
+        <Link
+          href={`/musculation/seance/${workout.id}/live`}
+          className="inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base font-bold text-white"
+          style={{ background: "linear-gradient(to right, #3F5EFB, #F50535)" }}
+        >
+          ▶ Démarrer la séance
+        </Link>
+      )}
+
       {/* Liste des exercices */}
       <div className="space-y-3">
         {workout.exercises.map((we, index) => (
