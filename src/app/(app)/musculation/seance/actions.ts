@@ -91,9 +91,7 @@ export async function startWorkout(workoutId: string): Promise<void> {
 }
 
 export async function completeSet(
-  workoutExerciseId: string,
-  actualReps: number,
-  actualWeight: number | null
+  workoutExerciseId: string
 ): Promise<void> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session) throw new Error("Non authentifié")
@@ -109,8 +107,6 @@ export async function completeSet(
     where: { id: workoutExerciseId },
     data: {
       completedSets: { increment: 1 },
-      reps: actualReps,
-      weight: actualWeight,
     },
   })
 }
@@ -120,7 +116,7 @@ export async function finishWorkout(workoutId: string): Promise<void> {
   if (!session) throw new Error("Non authentifié")
 
   await prisma.workout.updateMany({
-    where: { id: workoutId, userId: session.user.id },
+    where: { id: workoutId, userId: session.user.id, status: "EN_COURS" },
     data: { status: "TERMINEE", completedAt: new Date() },
   })
 }
