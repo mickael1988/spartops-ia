@@ -1,9 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useCart } from "../cart-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { quickStartWorkout } from "../seance/actions"
 
 type DifficultyKey = "DEBUTANT" | "INTERMEDIAIRE" | "AVANCE"
 
@@ -25,43 +24,43 @@ type Props = {
 }
 
 export function ExerciseCard({ exercise }: Props) {
-  const [loading, setLoading] = useState(false)
+  const { hasItem, addItem, removeItem } = useCart()
+  const inCart = hasItem(exercise.id)
   const diff = difficultyConfig[exercise.difficulty] ?? { label: exercise.difficulty, className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200" }
 
-  async function handleClick() {
-    if (loading) return
-    setLoading(true)
-    try {
-      await quickStartWorkout(exercise.id)
-    } catch {
-      setLoading(false)
+  function handleToggle() {
+    if (inCart) {
+      removeItem(exercise.id)
+    } else {
+      addItem({ id: exercise.id, name: exercise.name, image: exercise.image })
     }
   }
 
   return (
-    <button
-      onClick={handleClick}
-      disabled={loading}
-      className="text-left w-full rounded-xl transition-transform active:scale-95 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-    >
-      <Card className="bg-background/80 backdrop-blur-sm h-full hover:border-primary/50 transition-colors">
-        <CardHeader className="pb-2">
-          <div className="flex items-start justify-between gap-2">
-            <div className="text-2xl" aria-hidden="true">{exercise.image ?? "🏋️"}</div>
-            <Badge className={diff.className}>{diff.label}</Badge>
-          </div>
-          <CardTitle className="text-base mt-2">{exercise.name}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground line-clamp-2">{exercise.description}</p>
-          {exercise.equipment && (
-            <p className="text-xs text-muted-foreground mt-2"><span aria-hidden="true">🔧</span> {exercise.equipment}</p>
-          )}
-          <p className="text-xs font-medium text-primary mt-3">
-            {loading ? "Démarrage…" : "▶ Lancer la séance"}
-          </p>
-        </CardContent>
-      </Card>
-    </button>
+    <Card className={`bg-background/80 backdrop-blur-sm h-full transition-colors ${inCart ? "border-primary" : ""}`}>
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="text-2xl" aria-hidden="true">{exercise.image ?? "🏋️"}</div>
+          <Badge className={diff.className}>{diff.label}</Badge>
+        </div>
+        <CardTitle className="text-base mt-2">{exercise.name}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground line-clamp-2">{exercise.description}</p>
+        {exercise.equipment && (
+          <p className="text-xs text-muted-foreground"><span aria-hidden="true">🔧</span> {exercise.equipment}</p>
+        )}
+        <button
+          onClick={handleToggle}
+          className={`w-full rounded-xl py-2 text-sm font-semibold transition-colors ${
+            inCart
+              ? "bg-primary/10 text-primary border border-primary"
+              : "border hover:border-primary hover:text-primary"
+          }`}
+        >
+          {inCart ? "✅ Dans la séance — Retirer" : "+ Ajouter à la séance"}
+        </button>
+      </CardContent>
+    </Card>
   )
 }
