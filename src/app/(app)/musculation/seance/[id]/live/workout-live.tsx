@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { startWorkout, completeSet } from "../../actions"
 import type { Workout, WorkoutExercise, Exercise, MuscleGroup } from "@/generated/prisma/client"
 
@@ -25,6 +25,24 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
     Object.fromEntries(workout.exercises.map((we) => [we.id, we.weight]))
   )
   const [validating, setValidating] = useState(false)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    if (!started) return
+    timerRef.current = setInterval(() => setElapsedSeconds((s) => s + 1), 1000)
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [started])
+
+  function formatTime(seconds: number): string {
+    const h = Math.floor(seconds / 3600)
+    const m = Math.floor((seconds % 3600) / 60)
+    const s = seconds % 60
+    if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
+  }
 
   const current = workout.exercises[exerciseIndex]
   const totalExercises = workout.exercises.length
@@ -77,6 +95,7 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
       {/* Header : progression */}
       <div className="flex items-center justify-between text-sm text-muted-foreground pt-2">
         <span>Exercice {exerciseIndex + 1} / {totalExercises}</span>
+        <span className="font-mono font-bold text-base text-foreground">⏱ {formatTime(elapsedSeconds)}</span>
       </div>
 
       {/* Exercice actif */}
