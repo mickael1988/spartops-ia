@@ -21,6 +21,12 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
   const [completedSetsMap, setCompletedSetsMap] = useState<Record<string, number>>(
     Object.fromEntries(workout.exercises.map((we) => [we.id, we.completedSets]))
   )
+  const [setsMap, setSetsMap] = useState<Record<string, number>>(
+    Object.fromEntries(workout.exercises.map((we) => [we.id, we.sets]))
+  )
+  const [weightMap, setWeightMap] = useState<Record<string, number | null>>(
+    Object.fromEntries(workout.exercises.map((we) => [we.id, we.weight]))
+  )
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [restActive, setRestActive] = useState(false)
@@ -32,7 +38,7 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
 
   // Premier exercice non terminé
   const activeIndex = workout.exercises.findIndex(
-    (we) => (completedSetsMap[we.id] ?? 0) < we.sets
+    (we) => (completedSetsMap[we.id] ?? 0) < (setsMap[we.id] ?? we.sets)
   )
   const allDone = activeIndex === -1
 
@@ -128,7 +134,8 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
   async function handleCompleteSet(we: ExerciseWithRelations) {
     if (validatingId) return
     const done = completedSetsMap[we.id] ?? 0
-    if (done >= we.sets) return
+    const totalSets = setsMap[we.id] ?? we.sets
+    if (done >= totalSets) return
     setValidatingId(we.id)
     try {
       await completeSet(we.id)
@@ -184,10 +191,10 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
             ref={(el) => { exerciseRefs.current[index] = el }}
             className={`rounded-2xl border p-5 space-y-4 transition-all ${
               isCompleted
-                ? "opacity-50 bg-background/40"
+                ? "opacity-40 bg-background/40"
                 : isActive
                 ? "border-primary bg-background/80 backdrop-blur-sm shadow-sm"
-                : "opacity-60 bg-background/40"
+                : "bg-background/70"
             }`}
           >
             {/* En-tête */}
@@ -202,23 +209,57 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
               {isCompleted && <span className="text-green-500 text-xl" aria-label="Terminé">✅</span>}
             </div>
 
-            {/* Résumé rapide (non actif) */}
-            {!isActive && (
+            {/* Résumé (terminé) */}
+            {isCompleted && (
               <p className="text-sm text-muted-foreground">
-                {isCompleted
-                  ? `${we.sets} séries terminées`
-                  : `${we.sets} séries × ${we.reps} rép${we.weight ? ` · ${we.weight} kg` : ""}`}
+                {setsMap[we.id] ?? we.sets} séries terminées
               </p>
+            )}
+
+            {/* Inputs éditables (exercice en attente) */}
+            {!isActive && !isCompleted && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Séries</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={setsMap[we.id] ?? we.sets}
+                    onChange={(e) =>
+                      setSetsMap((prev) => ({ ...prev, [we.id]: Math.max(1, parseInt(e.target.value) || 1) }))
+                    }
+                    className="w-full rounded-xl border bg-background px-3 py-2 text-center text-lg font-bold"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Poids (kg)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.5}
+                    value={weightMap[we.id] ?? ""}
+                    placeholder="—"
+                    onChange={(e) =>
+                      setWeightMap((prev) => ({
+                        ...prev,
+                        [we.id]: e.target.value === "" ? null : parseFloat(e.target.value),
+                      }))
+                    }
+                    className="w-full rounded-xl border bg-background px-3 py-2 text-center text-lg font-bold"
+                  />
+                </div>
+              </div>
             )}
 
             {/* Contenu interactif (exercice actif uniquement) */}
             {isActive && (
               <>
                 <p className="text-center text-sm font-medium text-muted-foreground">
-                  Série {Math.min(done + 1, we.sets)} / {we.sets}
+                  Série {Math.min(done + 1, setsMap[we.id] ?? we.sets)} / {setsMap[we.id] ?? we.sets}
                 </p>
 
-                {done < we.sets ? (
+                {done < (setsMap[we.id] ?? we.sets) ? (
                   <button
                     onClick={() => handleCompleteSet(we)}
                     disabled={validatingId === we.id}
@@ -235,7 +276,7 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
 
                 {/* Dots séries */}
                 <div className="flex justify-center gap-2">
-                  {Array.from({ length: we.sets }).map((_, i) => (
+                  {Array.from({ length: setsMap[we.id] ?? we.sets }).map((_, i) => (
                     <span
                       key={i}
                       className={`h-3 w-3 rounded-full ${i < done ? "bg-primary" : "bg-muted"}`}
