@@ -111,6 +111,45 @@ export async function completeSet(
   })
 }
 
+export async function quickStartWorkout(exerciseId: string): Promise<void> {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session) throw new Error("Non authentifié")
+
+  const exercise = await prisma.exercise.findUnique({
+    where: { id: exerciseId },
+    select: { id: true, name: true },
+  })
+  if (!exercise) throw new Error("Exercice introuvable")
+
+  let workoutId: string
+  try {
+    const workout = await prisma.workout.create({
+      data: {
+        name: exercise.name,
+        userId: session.user.id,
+        status: "EN_COURS",
+        startedAt: new Date(),
+        exercises: {
+          create: {
+            exerciseId: exercise.id,
+            order: 1,
+            sets: 3,
+            reps: 10,
+            weight: null,
+            restSeconds: 60,
+          },
+        },
+      },
+    })
+    workoutId = workout.id
+  } catch (err) {
+    console.error("[quickStartWorkout]", err)
+    throw new Error("Erreur lors du démarrage de la séance")
+  }
+
+  redirect(`/musculation/seance/${workoutId}/live`)
+}
+
 export async function finishWorkout(workoutId: string): Promise<void> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session) throw new Error("Non authentifié")

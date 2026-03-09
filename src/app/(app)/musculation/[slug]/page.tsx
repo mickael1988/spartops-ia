@@ -1,15 +1,8 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { ChevronRight } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { prisma } from "@/lib/prisma"
-
-const difficultyConfig = {
-  DEBUTANT: { label: "Débutant", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" },
-  INTERMEDIAIRE: { label: "Intermédiaire", className: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200" },
-  AVANCE: { label: "Avancé", className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" },
-}
+import { ExerciseCard } from "./exercise-card"
 
 export default async function MuscleGroupPage({
   params,
@@ -49,26 +42,9 @@ export default async function MuscleGroupPage({
 
       {/* Grille exercices */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {group.exercises.map((exercise) => {
-          const diff = difficultyConfig[exercise.difficulty] ?? { label: exercise.difficulty, className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200" }
-          return (
-            <Card key={exercise.id} className="bg-background/80 backdrop-blur-sm">
-              <CardHeader className="pb-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="text-2xl" aria-hidden="true">{exercise.image ?? "🏋️"}</div>
-                  <Badge className={diff.className}>{diff.label}</Badge>
-                </div>
-                <CardTitle className="text-base mt-2">{exercise.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground line-clamp-2">{exercise.description}</p>
-                {exercise.equipment && (
-                  <p className="text-xs text-muted-foreground mt-2"><span aria-hidden="true">🔧</span> {exercise.equipment}</p>
-                )}
-              </CardContent>
-            </Card>
-          )
-        })}
+        {group.exercises.map((exercise) => (
+          <ExerciseCard key={exercise.id} exercise={exercise} />
+        ))}
       </div>
     </div>
   )
