@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { startWorkout } from "../../actions"
+import { startWorkout, completeSet } from "../../actions"
 import type { Workout, WorkoutExercise, Exercise, MuscleGroup } from "@/generated/prisma/client"
 
 type ExerciseWithRelations = WorkoutExercise & {
@@ -18,6 +18,13 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
   const [completedSetsMap, setCompletedSetsMap] = useState<Record<string, number>>(
     Object.fromEntries(workout.exercises.map((we) => [we.id, we.completedSets]))
   )
+  const [repsMap, setRepsMap] = useState<Record<string, number>>(
+    Object.fromEntries(workout.exercises.map((we) => [we.id, we.reps]))
+  )
+  const [weightMap, setWeightMap] = useState<Record<string, number | null>>(
+    Object.fromEntries(workout.exercises.map((we) => [we.id, we.weight]))
+  )
+  const [validating, setValidating] = useState(false)
 
   const current = workout.exercises[exerciseIndex]
   const totalExercises = workout.exercises.length
@@ -34,6 +41,19 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
 
   function handlePrev() {
     if (exerciseIndex > 0) setExerciseIndex((i) => i - 1)
+  }
+
+  async function handleCompleteSet() {
+    if (validating) return
+    const done = completedSetsMap[current.id] ?? 0
+    if (done >= current.sets) return
+    setValidating(true)
+    try {
+      await completeSet(current.id)
+      setCompletedSetsMap((prev) => ({ ...prev, [current.id]: done + 1 }))
+    } finally {
+      setValidating(false)
+    }
   }
 
   if (!started) {
@@ -60,14 +80,83 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
       </div>
 
       {/* Exercice actif */}
-      <div className="rounded-2xl border bg-background/80 backdrop-blur-sm p-6 space-y-4">
+      <div className="rounded-2xl border bg-background/80 backdrop-blur-sm p-6 space-y-5">
         <p className="text-xs text-muted-foreground uppercase tracking-wide">
           {current.exercise.muscleGroup.name}
         </p>
         <h2 className="text-2xl font-bold">{current.exercise.name}</h2>
-        <p className="text-4xl text-center" aria-hidden="true">
+        <p className="text-5xl text-center py-2" aria-hidden="true">
           {current.exercise.image ?? "🏋️"}
         </p>
+
+        {/* Série en cours */}
+        <p className="text-center text-sm font-medium text-muted-foreground">
+          Série {Math.min((completedSetsMap[current.id] ?? 0) + 1, current.sets)} / {current.sets}
+        </p>
+
+        {/* Inputs reps / poids (display-only, aide-mémoire pour l'utilisateur) */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Répétitions</label>
+            <input
+              type="number"
+              min={1}
+              max={100}
+              value={repsMap[current.id]}
+              onChange={(e) =>
+                setRepsMap((prev) => ({ ...prev, [current.id]: Math.max(1, parseInt(e.target.value) || 1) }))
+              }
+              className="w-full rounded-xl border bg-background px-3 py-3 text-center text-2xl font-bold"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Poids (kg)</label>
+            <input
+              type="number"
+              min={0}
+              step={0.5}
+              value={weightMap[current.id] ?? ""}
+              placeholder="—"
+              onChange={(e) =>
+                setWeightMap((prev) => ({
+                  ...prev,
+                  [current.id]: e.target.value === "" ? null : parseFloat(e.target.value),
+                }))
+              }
+              className="w-full rounded-xl border bg-background px-3 py-3 text-center text-2xl font-bold"
+            />
+          </div>
+        </div>
+
+        {/* Bouton valider */}
+        {(completedSetsMap[current.id] ?? 0) < current.sets ? (
+          <button
+            onClick={handleCompleteSet}
+            disabled={validating}
+            className="w-full rounded-2xl py-5 text-xl font-bold text-white disabled:opacity-60"
+            style={{ background: "linear-gradient(to right, #3F5EFB, #F50535)" }}
+          >
+            {validating ? "Enregistrement…" : "✓  Valider la série"}
+          </button>
+        ) : (
+          <div className="w-full rounded-2xl py-4 text-center font-bold text-green-600 bg-green-50 dark:bg-green-900/20">
+            Exercice terminé !
+          </div>
+        )}
+
+        {/* Dots séries */}
+        <div className="flex justify-center gap-2 pt-1">
+          {Array.from({ length: current.sets }).map((_, i) => (
+            <span
+              key={i}
+              className={`h-3 w-3 rounded-full ${
+                i < (completedSetsMap[current.id] ?? 0)
+                  ? "bg-primary"
+                  : "bg-muted"
+              }`}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Navigation */}
