@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation"
 import { headers } from "next/headers"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { startFromTemplate } from "../../actions"
 import { WorkoutLive } from "./workout-live"
 
 export default async function WorkoutLivePage({
@@ -25,6 +26,9 @@ export default async function WorkoutLivePage({
 
   if (!workout) notFound()
   if (workout.status === "TERMINEE") redirect(`/musculation/seance/${id}`)
+
+  // Si c'est un template, créer une copie et rediriger vers celle-ci
+  if (workout.isTemplate) await startFromTemplate(id)
 
   return <WorkoutLive workout={workout} />
 }

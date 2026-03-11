@@ -116,6 +116,15 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+@keyframes border-beam-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@theme inline {
+  --animate-border-beam: border-beam-spin 2.5s linear infinite;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

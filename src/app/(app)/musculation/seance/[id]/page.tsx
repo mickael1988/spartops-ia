@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import { StartButton } from "../../mes-seances/start-button"
 
 export default async function WorkoutDetailPage({
   params,
@@ -20,7 +21,10 @@ export default async function WorkoutDetailPage({
     where: { id, userId: session.user.id },
     include: {
       exercises: {
-        include: { exercise: true },
+        include: {
+          exercise: true,
+          setLogs: { orderBy: { setNumber: "asc" } },
+        },
         orderBy: { order: "asc" },
       },
     },
@@ -34,6 +38,9 @@ export default async function WorkoutDetailPage({
     TERMINEE: "Terminée",
   }[workout.status] ?? workout.status
 
+  const backHref = workout.isTemplate ? "/musculation/mes-seances" : "/musculation/historique"
+  const backLabel = workout.isTemplate ? "Mes séances" : "Historique"
+
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
@@ -42,26 +49,54 @@ export default async function WorkoutDetailPage({
           Musculation
         </Link>
         <ChevronRight className="h-4 w-4" />
+        <Link href={backHref} className="hover:text-foreground transition-colors">
+          {backLabel}
+        </Link>
+        <ChevronRight className="h-4 w-4" />
         <span className="text-foreground font-medium" aria-current="page">{workout.name}</span>
       </nav>
 
       {/* En-tête */}
       <div className="flex items-center gap-3 flex-wrap">
         <h1 className="text-3xl font-bold">{workout.name}</h1>
-        <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-          {statusLabel}
-        </Badge>
+        {!workout.isTemplate && (
+          <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+            {statusLabel}
+          </Badge>
+        )}
+        {workout.isTemplate && (
+          <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+            Template
+          </Badge>
+        )}
       </div>
 
-      <p className="text-muted-foreground">{workout.exercises.length} exercice{workout.exercises.length > 1 ? "s" : ""}</p>
+      <p className="text-muted-foreground">
+        {workout.exercises.length} exercice{workout.exercises.length > 1 ? "s" : ""}
+      </p>
 
-      {workout.status !== "TERMINEE" && (
+      {/* Actions */}
+      {workout.isTemplate && (
+        <StartButton templateId={workout.id} />
+      )}
+
+      {!workout.isTemplate && workout.status !== "TERMINEE" && (
         <Link
           href={`/musculation/seance/${workout.id}/live`}
           className="inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base font-bold text-white"
           style={{ background: "linear-gradient(to right, #3F5EFB, #F50535)" }}
         >
-          ▶ Démarrer la séance
+          ▶ {workout.status === "EN_COURS" ? "Reprendre la séance" : "Démarrer la séance"}
+        </Link>
+      )}
+
+      {!workout.isTemplate && workout.status === "TERMINEE" && (
+        <Link
+          href="/musculation"
+          className="inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base font-bold text-white"
+          style={{ background: "linear-gradient(135deg, #11998e, #38ef7d)" }}
+        >
+          🏠 Retour au menu principal
         </Link>
       )}
 
@@ -69,17 +104,31 @@ export default async function WorkoutDetailPage({
       <div className="space-y-3">
         {workout.exercises.map((we, index) => (
           <Card key={we.id} className="bg-background/80 backdrop-blur-sm">
-            <CardContent className="flex items-center gap-4 py-4">
-              <span className="text-muted-foreground text-sm w-6 text-right">{index + 1}.</span>
-              <div className="flex-1">
-                <p className="font-medium">{we.exercise.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  {we.sets} séries × {we.reps} rép
-                  {we.weight ? ` · ${we.weight} kg` : ""}
-                  {" · "}{we.restSeconds}s de repos
-                </p>
+            <CardContent className="py-4 space-y-3">
+              <div className="flex items-center gap-4">
+                <span className="text-muted-foreground text-sm w-6 text-right">{index + 1}.</span>
+                <div className="flex-1">
+                  <p className="font-medium">{we.exercise.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {we.sets} séries × {we.reps} rép
+                    {we.weight ? ` · ${we.weight} kg` : ""}
+                    {" · "}{we.restSeconds}s de repos
+                  </p>
+                </div>
+                <span className="text-xl" aria-hidden="true">{we.exercise.image ?? "🏋️"}</span>
               </div>
-              <span className="text-xl" aria-hidden="true">{we.exercise.image ?? "🏋️"}</span>
+
+              {/* Récap détaillé par série (instances terminées uniquement) */}
+              {we.setLogs.length > 0 && (
+                <div className="ml-10 space-y-1">
+                  {we.setLogs.map((log) => (
+                    <p key={log.id} className="text-sm text-muted-foreground">
+                      Série {log.setNumber} : {log.reps} rép
+                      {log.weight ? ` × ${log.weight} kg` : ""}
+                    </p>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}

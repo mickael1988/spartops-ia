@@ -11,12 +11,18 @@ export default async function MuscleGroupPage({
 }) {
   const { slug } = await params
 
+  const DIFFICULTY_ORDER = { DEBUTANT: 0, INTERMEDIAIRE: 1, AVANCE: 2 }
+
   const group = await prisma.muscleGroup.findUnique({
     where: { slug },
     include: { exercises: { orderBy: { name: "asc" } } },
   })
 
   if (!group) notFound()
+
+  group.exercises.sort(
+    (a, b) => DIFFICULTY_ORDER[a.difficulty] - DIFFICULTY_ORDER[b.difficulty]
+  )
 
   return (
     <div className="space-y-6">

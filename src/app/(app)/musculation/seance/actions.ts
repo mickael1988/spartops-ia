@@ -58,6 +58,7 @@ export async function createWorkout(data: CreateWorkoutInput): Promise<void> {
       data: {
         name: data.name.trim(),
         userId: session.user.id,
+        isTemplate: true,
         status: "PLANIFIEE",
         exercises: {
           create: data.exercises.map((ex) => ({
@@ -91,7 +92,9 @@ export async function startWorkout(workoutId: string): Promise<void> {
 }
 
 export async function completeSet(
-  workoutExerciseId: string
+  workoutExerciseId: string,
+  reps: number,
+  weight: number | null
 ): Promise<void> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session) throw new Error("Non authentifié")
@@ -103,12 +106,20 @@ export async function completeSet(
   if (!we) throw new Error("Exercice introuvable")
   if (we.completedSets >= we.sets) return
 
-  await prisma.workoutExercise.update({
-    where: { id: workoutExerciseId },
-    data: {
-      completedSets: { increment: 1 },
-    },
-  })
+  await prisma.$transaction([
+    prisma.workoutExercise.update({
+      where: { id: workoutExerciseId },
+      data: { completedSets: { increment: 1 } },
+    }),
+    prisma.setLog.create({
+      data: {
+        workoutExerciseId,
+        setNumber: we.completedSets + 1,
+        reps,
+        weight,
+      },
+    }),
+  ])
 }
 
 export async function quickStartWorkout(exerciseId: string): Promise<void> {
@@ -117,7 +128,7 @@ export async function quickStartWorkout(exerciseId: string): Promise<void> {
 
   const exercise = await prisma.exercise.findUnique({
     where: { id: exerciseId },
-    select: { id: true, name: true },
+    select: { id: true, name: true, defaultReps: true, defaultRestSeconds: true },
   })
   if (!exercise) throw new Error("Exercice introuvable")
 
@@ -133,10 +144,10 @@ export async function quickStartWorkout(exerciseId: string): Promise<void> {
           create: {
             exerciseId: exercise.id,
             order: 1,
-            sets: 3,
-            reps: 10,
+            sets: 4,
+            reps: exercise.defaultReps ?? 10,
             weight: null,
-            restSeconds: 60,
+            restSeconds: exercise.defaultRestSeconds ?? 60,
           },
         },
       },
@@ -162,7 +173,7 @@ export async function buildAndStartWorkout(exerciseIds: string[]): Promise<void>
 
   const found = await prisma.exercise.findMany({
     where: { id: { in: uniqueIds } },
-    select: { id: true, name: true },
+    select: { id: true, name: true, defaultReps: true, defaultRestSeconds: true },
   })
   if (found.length !== uniqueIds.length) throw new Error("Exercice(s) invalide(s)")
 
@@ -172,7 +183,12 @@ export async function buildAndStartWorkout(exerciseIds: string[]): Promise<void>
 
   const orderedExercises = uniqueIds.map((id, index) => {
     const ex = found.find((f) => f.id === id)!
-    return { exerciseId: ex.id, order: index + 1 }
+    return {
+      exerciseId: ex.id,
+      order: index + 1,
+      reps: ex.defaultReps ?? 10,
+      restSeconds: ex.defaultRestSeconds ?? 60,
+    }
   })
 
   let workoutId: string
@@ -187,10 +203,10 @@ export async function buildAndStartWorkout(exerciseIds: string[]): Promise<void>
           create: orderedExercises.map((ex) => ({
             exerciseId: ex.exerciseId,
             order: ex.order,
-            sets: 3,
-            reps: 10,
+            sets: 4,
+            reps: ex.reps,
             weight: null,
-            restSeconds: 60,
+            restSeconds: ex.restSeconds,
           })),
         },
       },
@@ -199,6 +215,46 @@ export async function buildAndStartWorkout(exerciseIds: string[]): Promise<void>
   } catch (err) {
     console.error("[buildAndStartWorkout]", err)
     throw new Error("Erreur lors de la création de la séance")
+  }
+
+  redirect(`/musculation/seance/${workoutId}/live`)
+}
+
+export async function startFromTemplate(templateId: string): Promise<void> {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session) throw new Error("Non authentifié")
+
+  const template = await prisma.workout.findFirst({
+    where: { id: templateId, userId: session.user.id, isTemplate: true },
+    include: { exercises: { orderBy: { order: "asc" } } },
+  })
+  if (!template) throw new Error("Template introuvable")
+
+  let workoutId: string
+  try {
+    const copy = await prisma.workout.create({
+      data: {
+        name: template.name,
+        userId: session.user.id,
+        isTemplate: false,
+        status: "EN_COURS",
+        startedAt: new Date(),
+        exercises: {
+          create: template.exercises.map((ex) => ({
+            exerciseId: ex.exerciseId,
+            order: ex.order,
+            sets: ex.sets,
+            reps: ex.reps,
+            weight: ex.weight,
+            restSeconds: ex.restSeconds,
+          })),
+        },
+      },
+    })
+    workoutId = copy.id
+  } catch (err) {
+    console.error("[startFromTemplate]", err)
+    throw new Error("Erreur lors du démarrage de la séance")
   }
 
   redirect(`/musculation/seance/${workoutId}/live`)

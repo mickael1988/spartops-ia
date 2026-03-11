@@ -9,6 +9,8 @@ import {
   User,
   LayoutDashboard,
   Zap,
+  History,
+  BookOpen,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -37,6 +39,16 @@ const navItems = [
     label: "Profil",
     href: "/profil",
     icon: User,
+  },
+  {
+    label: "Mes séances",
+    href: "/musculation/mes-seances",
+    icon: BookOpen,
+  },
+  {
+    label: "Historique",
+    href: "/musculation/historique",
+    icon: History,
   },
 ]
 

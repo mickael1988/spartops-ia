@@ -37,7 +37,7 @@ export function ExerciseCard({ exercise }: Props) {
   }
 
   return (
-    <Card className={`bg-background/80 backdrop-blur-sm h-full transition-colors ${inCart ? "border-primary" : ""}`}>
+    <Card className={`bg-background/80 backdrop-blur-sm h-full flex flex-col transition-colors ${inCart ? "border-primary" : ""}`}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="text-2xl" aria-hidden="true">{exercise.image ?? "🏋️"}</div>
@@ -45,14 +45,14 @@ export function ExerciseCard({ exercise }: Props) {
         </div>
         <CardTitle className="text-base mt-2">{exercise.name}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="flex flex-col flex-1 gap-3">
         <p className="text-sm text-muted-foreground line-clamp-2">{exercise.description}</p>
         {exercise.equipment && (
           <p className="text-xs text-muted-foreground"><span aria-hidden="true">🔧</span> {exercise.equipment}</p>
         )}
         <button
           onClick={handleToggle}
-          className={`w-full rounded-xl py-2 text-sm font-semibold transition-colors ${
+          className={`mt-auto w-full rounded-xl py-2 text-sm font-semibold transition-colors ${
             inCart
               ? "bg-primary/10 text-primary border border-primary"
               : "border hover:border-primary hover:text-primary"

@@ -83,14 +83,16 @@ enum Difficulty {
 }
 
 model Exercise {
-  id            String      @id @default(cuid())
-  name          String
-  description   String
-  image         String?
-  muscleGroupId String
-  muscleGroup   MuscleGroup @relation(fields: [muscleGroupId], references: [id])
-  difficulty    Difficulty
-  equipment     String?
+  id                  String      @id @default(cuid())
+  name                String
+  description         String
+  image               String?
+  muscleGroupId       String
+  muscleGroup         MuscleGroup @relation(fields: [muscleGroupId], references: [id])
+  difficulty          Difficulty
+  equipment           String?
+  defaultReps         Int?
+  defaultRestSeconds  Int?
 
   workoutExercises WorkoutExercise[]
 }
@@ -106,6 +108,7 @@ model Workout {
   userId      String
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   name        String
+  isTemplate  Boolean       @default(false)
   status      WorkoutStatus @default(PLANIFIEE)
   scheduledAt DateTime?
   startedAt   DateTime?
@@ -127,6 +130,18 @@ model WorkoutExercise {
   weight        Float?
   restSeconds   Int      @default(60)
   completedSets Int      @default(0)
+
+  setLogs SetLog[]
+}
+
+model SetLog {
+  id                String          @id @default(cuid())
+  workoutExerciseId String
+  workoutExercise   WorkoutExercise @relation(fields: [workoutExerciseId], references: [id], onDelete: Cascade)
+  setNumber         Int
+  reps              Int
+  weight            Float?
+  completedAt       DateTime        @default(now())
 }
 
 // ==========================================

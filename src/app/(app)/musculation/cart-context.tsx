@@ -12,6 +12,7 @@ type CartContextType = {
   items: CartItem[]
   addItem: (item: CartItem) => void
   removeItem: (id: string) => void
+  removeLast: () => void
   clear: () => void
   hasItem: (id: string) => boolean
 }
@@ -29,12 +30,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems((prev) => prev.filter((i) => i.id !== id))
   }, [])
 
+  const removeLast = useCallback(() => setItems((prev) => prev.slice(0, -1)), [])
+
   const clear = useCallback(() => setItems([]), [])
 
   const hasItem = useCallback((id: string) => items.some((i) => i.id === id), [items])
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, clear, hasItem }}>
+    <CartContext.Provider value={{ items, addItem, removeItem, removeLast, clear, hasItem }}>
       {children}
     </CartContext.Provider>
   )

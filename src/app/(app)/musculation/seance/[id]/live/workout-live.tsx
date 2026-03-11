@@ -27,6 +27,9 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
   const [weightMap, setWeightMap] = useState<Record<string, number | null>>(
     Object.fromEntries(workout.exercises.map((we) => [we.id, we.weight]))
   )
+  const [repsMap, setRepsMap] = useState<Record<string, number>>(
+    Object.fromEntries(workout.exercises.map((we) => [we.id, we.reps]))
+  )
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [restActive, setRestActive] = useState(false)
@@ -137,8 +140,10 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
     const totalSets = setsMap[we.id] ?? we.sets
     if (done >= totalSets) return
     setValidatingId(we.id)
+    const reps = repsMap[we.id] ?? we.reps
+    const weight = weightMap[we.id] ?? null
     try {
-      await completeSet(we.id)
+      await completeSet(we.id, reps, weight)
       setCompletedSetsMap((prev) => ({ ...prev, [we.id]: done + 1 }))
       startRest(we.restSeconds, we.id)
     } finally {
@@ -149,6 +154,12 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
   if (!started) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+        <button
+          onClick={() => router.back()}
+          className="self-start flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          ← Retour
+        </button>
         <h1 className="text-2xl font-bold text-center">{workout.name}</h1>
         <p className="text-muted-foreground">
           {workout.exercises.length} exercice{workout.exercises.length > 1 ? "s" : ""}
@@ -182,7 +193,7 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
       {/* Liste complète des exercices */}
       {workout.exercises.map((we, index) => {
         const done = completedSetsMap[we.id] ?? 0
-        const isCompleted = done >= we.sets
+        const isCompleted = done >= (setsMap[we.id] ?? we.sets)
         const isActive = index === activeIndex
 
         return (
@@ -260,14 +271,62 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
                 </p>
 
                 {done < (setsMap[we.id] ?? we.sets) ? (
-                  <button
-                    onClick={() => handleCompleteSet(we)}
-                    disabled={validatingId === we.id}
-                    className="w-full rounded-2xl py-4 text-lg font-bold text-white disabled:opacity-60"
-                    style={{ background: "linear-gradient(to right, #3F5EFB, #F50535)" }}
-                  >
-                    {validatingId === we.id ? "Enregistrement…" : "✓ Valider la série"}
-                  </button>
+                  <>
+                    {/* Inputs séries + reps + poids pour la série en cours */}
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">Séries</label>
+                        <input
+                          type="number"
+                          min={done + 1}
+                          max={20}
+                          value={setsMap[we.id] ?? we.sets}
+                          onChange={(e) =>
+                            setSetsMap((prev) => ({ ...prev, [we.id]: Math.max(done + 1, parseInt(e.target.value) || done + 1) }))
+                          }
+                          className="w-full rounded-xl border bg-background px-3 py-2 text-center text-lg font-bold"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">Répétitions</label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={200}
+                          value={repsMap[we.id] ?? we.reps}
+                          onChange={(e) =>
+                            setRepsMap((prev) => ({ ...prev, [we.id]: Math.max(1, parseInt(e.target.value) || 1) }))
+                          }
+                          className="w-full rounded-xl border bg-background px-3 py-2 text-center text-lg font-bold"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">Poids (kg)</label>
+                        <input
+                          type="number"
+                          min={0}
+                          step={0.5}
+                          value={weightMap[we.id] ?? ""}
+                          placeholder="—"
+                          onChange={(e) =>
+                            setWeightMap((prev) => ({
+                              ...prev,
+                              [we.id]: e.target.value === "" ? null : parseFloat(e.target.value),
+                            }))
+                          }
+                          className="w-full rounded-xl border bg-background px-3 py-2 text-center text-lg font-bold"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleCompleteSet(we)}
+                      disabled={validatingId === we.id}
+                      className="w-full rounded-2xl py-4 text-lg font-bold text-white disabled:opacity-60"
+                      style={{ background: "linear-gradient(to right, #3F5EFB, #F50535)" }}
+                    >
+                      {validatingId === we.id ? "Enregistrement…" : "✓ Valider la série"}
+                    </button>
+                  </>
                 ) : (
                   <div className="w-full rounded-2xl py-3 text-center font-bold text-green-600 bg-green-50 dark:bg-green-900/20">
                     ✅ Exercice terminé !
