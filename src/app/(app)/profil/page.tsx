@@ -43,6 +43,11 @@ function buildChartData(
   return data
 }
 
+const MOIS_FR    = ["Janvier","Février","Mars","Avril","Mai","Juin",
+                    "Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
+const MOIS_COURT = ["Jan","Fév","Mar","Avr","Mai","Juin",
+                    "Juil","Août","Sep","Oct","Nov","Déc"]
+
 export default async function ProfilPage() {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session) redirect("/login")
@@ -74,10 +79,6 @@ export default async function ProfilPage() {
 
   const chartData = buildChartData(workouts, now)
 
-  const MOIS_FR    = ["Janvier","Février","Mars","Avril","Mai","Juin",
-                      "Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
-  const MOIS_COURT = ["Jan","Fév","Mar","Avr","Mai","Juin",
-                      "Juil","Août","Sep","Oct","Nov","Déc"]
   const moisCourantIdx   = now.getUTCMonth()
   const moisPrecedentIdx = moisCourantIdx === 0 ? 11 : moisCourantIdx - 1
   const labelCourant   = MOIS_FR[moisCourantIdx]
