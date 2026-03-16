@@ -114,6 +114,8 @@ model Workout {
   startedAt   DateTime?
   completedAt DateTime?
   createdAt   DateTime      @default(now())
+  rating      Int?
+  comment     String?
 
   exercises WorkoutExercise[]
 }
