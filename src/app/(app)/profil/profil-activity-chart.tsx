@@ -36,7 +36,7 @@ export function ProfilActivityChart({ data, labelPrecedent, labelCourant, period
     return (count / maxCount) * CHART_HEIGHT
   }
 
-  function renderGroup(weeks: WeekData[], offsetX: number, isCourant: boolean) {
+  function renderGroup(weeks: WeekData[], offsetX: number, isCourant: boolean, keyPrefix: string) {
     return Array.from({ length: MAX_WEEKS }, (_, i) => {
       const week  = weeks.find(w => w.weekIndex === i + 1)
       const count = week?.count ?? 0
@@ -44,17 +44,18 @@ export function ProfilActivityChart({ data, labelPrecedent, labelCourant, period
       const x = offsetX + i * (BAR_WIDTH + BAR_GAP)
       const y = CHART_HEIGHT - h
       const minH = count > 0 ? 4 : 0
+      const labelY = Math.max(y - 4, 8)
 
       if (week?.isCurrent) {
         return (
-          <g key={i}>
+          <g key={`${keyPrefix}-${i}`}>
             <rect x={x} y={y} width={BAR_WIDTH} height={Math.max(h, minH)}
               fill="url(#hatch)"
               rx={3} ry={3}
               stroke="#f97316" strokeWidth="1" strokeOpacity="0.5" strokeDasharray="3 2"
             />
             {count > 0 && (
-              <text x={x + BAR_WIDTH / 2} y={y - 4} textAnchor="middle"
+              <text x={x + BAR_WIDTH / 2} y={labelY} textAnchor="middle"
                 fontSize="9" fill="#9ca3af">{count}</text>
             )}
           </g>
@@ -63,13 +64,13 @@ export function ProfilActivityChart({ data, labelPrecedent, labelCourant, period
 
       if (isCourant) {
         return (
-          <g key={i}>
+          <g key={`${keyPrefix}-${i}`}>
             <rect x={x} y={y} width={BAR_WIDTH} height={Math.max(h, minH)}
               fill={count > 0 ? "url(#grad-courant)" : "#1f1f1f"}
               rx={3} ry={3}
             />
             {count > 0 && (
-              <text x={x + BAR_WIDTH / 2} y={y - 4} textAnchor="middle"
+              <text x={x + BAR_WIDTH / 2} y={labelY} textAnchor="middle"
                 fontSize="9" fill="#f97316">{count}</text>
             )}
           </g>
@@ -78,14 +79,14 @@ export function ProfilActivityChart({ data, labelPrecedent, labelCourant, period
 
       // Mois précédent
       return (
-        <g key={i}>
+        <g key={`${keyPrefix}-${i}`}>
           <rect x={x} y={y} width={BAR_WIDTH} height={Math.max(h, minH)}
             fill={count > 0 ? "#7c3d12" : "#1f1f1f"}
             fillOpacity={count > 0 ? 0.8 : 1}
             rx={3} ry={3}
           />
           {count > 0 && (
-            <text x={x + BAR_WIDTH / 2} y={y - 4} textAnchor="middle"
+            <text x={x + BAR_WIDTH / 2} y={labelY} textAnchor="middle"
               fontSize="9" fill="#9ca3af">{count}</text>
           )}
         </g>
@@ -123,8 +124,8 @@ export function ProfilActivityChart({ data, labelPrecedent, labelCourant, period
             </defs>
 
             {/* Lignes de grille horizontales */}
-            {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
-              <line key={i}
+            {[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
+              <line key={ratio}
                 x1={0} y1={CHART_HEIGHT - ratio * CHART_HEIGHT}
                 x2={svgWidth} y2={CHART_HEIGHT - ratio * CHART_HEIGHT}
                 stroke="#1f1f1f" strokeWidth="1"
@@ -132,7 +133,7 @@ export function ProfilActivityChart({ data, labelPrecedent, labelCourant, period
             ))}
 
             {/* Barres mois précédent */}
-            {renderGroup(precedent, 0, false)}
+            {renderGroup(precedent, 0, false, "prev")}
 
             {/* Séparateur vertical */}
             <line
@@ -142,7 +143,7 @@ export function ProfilActivityChart({ data, labelPrecedent, labelCourant, period
             />
 
             {/* Barres mois en cours */}
-            {renderGroup(courant, offsetCourant, true)}
+            {renderGroup(courant, offsetCourant, true, "cur")}
 
             {/* Label mois précédent */}
             <text
