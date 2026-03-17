@@ -30,7 +30,7 @@ Ajouter un tableau de progression personnelle sur les exercices fondamentaux (sq
 
 Chaque carte contient :
 1. **Nom de l'exercice** + meilleur 1RM actuel affiché en grand (`— kg` si aucune entrée)
-2. **Graphique SVG natif en ligne** — historique des 6 dernières entrées (points reliés, axe X = dates, axe Y = kg)
+2. **Graphique SVG natif en ligne** — affiche au maximum les 6 entrées les plus récentes (par `recordedAt` desc, limit 6), points reliés, axe X = dates, axe Y = kg. Si aucune entrée n'existe pour cet exercice, le graphique affiche un texte "Aucune donnée" et aucune ligne SVG n'est rendue.
 3. **Formulaire de saisie** avec deux modes toggleables :
    - **Calculateur (défaut)** : champs `Poids (kg)` + `Répétitions` → 1RM estimé affiché en temps réel sous la formule `1RM = poids × (1 + reps / 30)` (formule d'Epley)
    - **Saisie directe** : un seul champ `1RM (kg)`
@@ -55,7 +55,13 @@ model Exercise {
 }
 ```
 
-Les 3 exercices fondamentaux sont marqués `isFundamental: true` via un script de seed dédié (identifiés par leur nom exact dans la base).
+Les 3 exercices fondamentaux sont marqués `isFundamental: true` via un script de seed dédié. Les noms exacts dans la base sont :
+
+| Nom canonique       | Slug groupe |
+|---------------------|-------------|
+| `"Squat"`           | `jambes`    |
+| `"Développé couché"`| `pectoraux` |
+| `"Soulevé de terre"`| `dos`       |
 
 ### Nouveau modèle `OneRepMax`
 
@@ -65,7 +71,7 @@ model OneRepMax {
   userId       String
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   exerciseId   String
-  exercise     Exercise @relation(fields: [exerciseId], references: [id])
+  exercise     Exercise @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
   estimatedMax Float    // 1RM en kg (calculé ou saisi directement)
   recordedAt   DateTime @default(now())
   inputWeight  Float?   // poids utilisé si mode calculateur
@@ -119,14 +125,23 @@ page.tsx (server)
 **`save1RM(exerciseId, estimatedMax, inputWeight?, inputReps?, isManual)`**
 - Vérifie session
 - Valide : `estimatedMax > 0`, `estimatedMax ≤ 500`
+- En mode calculateur : `inputWeight > 0`, `inputReps >= 1`, `inputReps <= 30` (au-delà, Epley est peu fiable)
+- `recordedAt` est toujours la date de soumission (`@default(now())`) — la saisie rétroactive est hors scope
 - Insère `OneRepMax`
 - `revalidatePath("/musculation/progression")`
 
 **`scheduleTest()`**
-- Vérifie session
-- Vérifie qu'aucun workout "Test 1RM" PLANIFIEE n'existe déjà à venir
-- Crée `Workout { name: "Test 1RM", isTemplate: false, status: PLANIFIEE, scheduledAt: now + 28 jours }`
+- Vérifie session (`userId = session.user.id`)
+- Vérifie qu'aucun workout `{ userId, name: "Test 1RM", status: PLANIFIEE, scheduledAt: { gte: now } }` n'existe déjà pour cet utilisateur
+- Crée `Workout { userId, name: "Test 1RM", isTemplate: false, status: PLANIFIEE, scheduledAt: now + 28 jours }` — sans exercices (intentionnel, voir note agenda ci-dessous)
 - `revalidatePath("/agenda")` + `revalidatePath("/musculation/progression")`
+
+### Note agenda — Workout "Test 1RM" sans exercices
+
+Le workout créé par `scheduleTest` n'a intentionnellement aucun exercice. Dans le drawer de l'agenda, il s'affiche comme les autres workouts planifiés (nom + date), mais :
+- La liste d'exercices affiche "Test de force — 1RM" à la place d'exercices
+- Le bouton "Démarrer" navigue vers `/musculation/progression` au lieu de `/musculation/seance/{id}/live`
+- Le bouton "Modifier" est absent (pas pertinent pour un événement memo)
 
 ---
 
