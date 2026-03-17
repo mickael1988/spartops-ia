@@ -1,0 +1,77 @@
+/* Override react-calendar pour le thème sombre de SpartOps */
+.agenda-cal .react-calendar {
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  width: 100%;
+  color: inherit;
+}
+
+.agenda-cal .react-calendar__navigation {
+  margin-bottom: 8px;
+}
+
+.agenda-cal .react-calendar__navigation button {
+  background: none;
+  color: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  min-width: 36px;
+}
+
+.agenda-cal .react-calendar__navigation button:hover:not(:disabled) {
+  background: oklch(0.97 0 0 / 0.08);
+}
+
+.agenda-cal .react-calendar__navigation button:disabled {
+  opacity: 0.4;
+}
+
+.agenda-cal .react-calendar__month-view__weekdays {
+  text-align: center;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: oklch(0.556 0 0);
+  margin-bottom: 4px;
+}
+
+.agenda-cal .react-calendar__month-view__weekdays abbr {
+  text-decoration: none;
+}
+
+.agenda-cal .react-calendar__tile {
+  background: none;
+  color: inherit;
+  border-radius: 10px;
+  padding: 10px 4px 6px;
+  position: relative;
+  font-size: 13px;
+  line-height: 1;
+  transition: background 0.15s;
+}
+
+.agenda-cal .react-calendar__tile:hover:not(:disabled) {
+  background: oklch(0.97 0 0 / 0.08);
+  cursor: pointer;
+}
+
+.agenda-cal .react-calendar__tile--now {
+  background: oklch(0.97 0 0 / 0.06);
+  font-weight: 700;
+}
+
+.agenda-cal .react-calendar__tile--active,
+.agenda-cal .react-calendar__tile--active:hover {
+  background: linear-gradient(to right, #3F5EFB, #F50535) !important;
+  color: white;
+}
+
+.agenda-cal .react-calendar__month-view__days__day--neighboringMonth {
+  opacity: 0.3;
+}
+
+.agenda-cal .react-calendar__month-view__days__day--weekend {
+  color: inherit;
+}
