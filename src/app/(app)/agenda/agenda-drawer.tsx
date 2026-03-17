@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { X, Play, Pencil, CalendarDays, Plus, Loader2 } from "lucide-react"
 import { rescheduleWorkout, assignWorkoutToDate } from "./actions"
@@ -35,6 +35,14 @@ export function AgendaDrawer({ open, onClose, date, events, templates }: Props) 
   const [error, setError] = useState<string | null>(null)
   const [reschedulingId, setReschedulingId] = useState<string | null>(null)
   const [newDate, setNewDate] = useState("")
+
+  useEffect(() => {
+    if (!open) {
+      setReschedulingId(null)
+      setNewDate("")
+      setError(null)
+    }
+  }, [open])
 
   const hasEvents = events.length > 0
 
