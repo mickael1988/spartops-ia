@@ -29,7 +29,7 @@ Ajouter un tableau de progression personnelle sur les exercices fondamentaux (sq
 **3 cartes d'exercice (une par exercice `isFundamental: true`) :**
 
 Chaque carte contient :
-1. **Nom de l'exercice** + meilleur 1RM actuel affiché en grand (`— kg` si aucune entrée)
+1. **Nom de l'exercice** + meilleur 1RM actuel affiché en grand (`— kg` si aucune entrée) — le "meilleur" est le maximum de toutes les entrées `estimatedMax` pour cet exercice et cet utilisateur (pas la plus récente)
 2. **Graphique SVG natif en ligne** — affiche au maximum les 6 entrées les plus récentes (par `recordedAt` desc, limit 6), points reliés, axe X = dates, axe Y = kg. Si aucune entrée n'existe pour cet exercice, le graphique affiche un texte "Aucune donnée" et aucune ligne SVG n'est rendue.
 3. **Formulaire de saisie** avec deux modes toggleables :
    - **Calculateur (défaut)** : champs `Poids (kg)` + `Répétitions` → 1RM estimé affiché en temps réel sous la formule `1RM = poids × (1 + reps / 30)` (formule d'Epley)
@@ -111,7 +111,7 @@ Appliquée côté client pour affichage en temps réel, et côté serveur pour p
 ```
 page.tsx (server)
   ├── prisma.exercise.findMany({ where: { isFundamental: true } })
-  ├── prisma.oneRepMax.findMany({ where: { userId }, orderBy: recordedAt asc })
+  ├── prisma.oneRepMax.findMany({ where: { userId }, orderBy: recordedAt desc, take: 6 par exercice }) — réordonné asc côté client pour le rendu du graphique
   └── prisma.workout.findFirst({ where: { name "Test 1RM", status PLANIFIEE, scheduledAt gte now } })
       → ProgressionClient (props: exercises, history, hasScheduled)
           ├── Bannière rappel + bouton Planifier
