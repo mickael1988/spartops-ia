@@ -49,6 +49,7 @@ export function AgendaDrawer({ open, onClose, date, events, templates }: Props) 
         setReschedulingId(null)
         setNewDate("")
         onClose()
+        router.refresh()
       }
     })
   }
@@ -62,6 +63,7 @@ export function AgendaDrawer({ open, onClose, date, events, templates }: Props) 
         setError(res.error)
       } else {
         onClose()
+        router.refresh()
       }
     })
   }
@@ -116,7 +118,7 @@ export function AgendaDrawer({ open, onClose, date, events, templates }: Props) 
                 {event.exercises.length > 0 && (
                   <p className="text-xs text-muted-foreground mt-1">
                     {event.exercises.slice(0, 3).map(e => e.name).join(" · ")}
-                    {event.exercises.length === 4 && " · …"}
+                    {event.exercises.length > 3 && " · …"}
                   </p>
                 )}
               </div>
