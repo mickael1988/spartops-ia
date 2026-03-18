@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { betterFetch } from "@better-fetch/fetch"
-import type { Session } from "@/lib/auth"
 
 const PUBLIC_ROUTES = ["/", "/login", "/register"]
+
+// better-auth stocke la session dans ce cookie
+const SESSION_COOKIE = "better-auth.session_token"
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
@@ -12,18 +13,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Vérifier la session
-  const { data: session } = await betterFetch<Session>(
-    "/api/auth/get-session",
-    {
-      baseURL: request.nextUrl.origin,
-      headers: {
-        cookie: request.headers.get("cookie") ?? "",
-      },
-    }
-  )
+  // Vérification rapide : présence du cookie de session (pas de DB call)
+  // La vraie validation de la session est faite par les server components via getSession()
+  const sessionCookie = request.cookies.get(SESSION_COOKIE)
 
-  if (!session) {
+  if (!sessionCookie?.value) {
     return NextResponse.redirect(new URL("/login", request.url))
   }
 
@@ -32,14 +26,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Protège toutes les routes sauf :
-     * - _next/static (fichiers statiques)
-     * - _next/image (optimisation images)
-     * - favicon.ico
-     * - api/auth (routes better-auth)
-     * - fichiers publics (.png, .jpg, .svg, .ico, .webp...)
-     */
     "/((?!_next/static|_next/image|favicon.ico|api/auth|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico|css|js)).*)",
   ],
 }
