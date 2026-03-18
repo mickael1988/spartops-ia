@@ -338,14 +338,15 @@ export function ProgressionClient({ exercises, lastEntryDate, hasScheduled }: Pr
         ))}
       </div>
 
-      {/* Retour */}
+      {/* Terminer */}
       <div className="flex justify-center pt-2">
         <Link
           href="/musculation"
-          className="flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="flex items-center gap-2 rounded-xl px-8 py-3 text-base font-semibold text-white transition-colors hover:opacity-90"
+          style={{ background: "linear-gradient(to right, #3F5EFB, #F50535)" }}
         >
           <ArrowLeft className="h-4 w-4" />
-          Retour à la musculation
+          Terminer
         </Link>
       </div>
     </div>
