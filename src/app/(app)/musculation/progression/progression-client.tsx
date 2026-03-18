@@ -173,7 +173,7 @@ function ExerciseCard({ exercise }: { exercise: ExerciseRecord }) {
         <img
           src={image}
           alt={exercise.name}
-          className="w-full h-36 object-cover"
+          className="w-full h-44 object-contain bg-muted/30"
         />
       )}
 

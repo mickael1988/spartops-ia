@@ -116,7 +116,7 @@ export function Profil1RMChart({ exercises }: Props) {
                 <div key={ex.id} className="rounded-lg border overflow-hidden">
                   {image && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={image} alt={ex.name} className="w-full h-24 object-cover" />
+                    <img src={image} alt={ex.name} className="w-full h-28 object-contain bg-muted/30" />
                   )}
                   <div className="p-2 space-y-1">
                     <div className="flex items-center justify-between">
