@@ -9,6 +9,12 @@ type Props = {
   exercises: ExerciseRecord[]
 }
 
+const EXERCISE_IMAGES: Record<string, string> = {
+  "Squat": "/groups/squat.png",
+  "Développé couché": "/groups/developpe-couche.png",
+  "Soulevé de terre": "/groups/SDT.png",
+}
+
 function ProgressionChart({ history }: { history: OneRepMaxEntry[] }) {
   const W = 240
   const H = 80
@@ -104,17 +110,26 @@ export function Profil1RMChart({ exercises }: Props) {
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-3">
-            {exercises.map(ex => (
-              <div key={ex.id} className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium">{ex.name}</p>
-                  <span className="text-sm font-bold text-orange-500">
-                    {ex.bestMax !== null ? `${ex.bestMax} kg` : "— kg"}
-                  </span>
+            {exercises.map(ex => {
+              const image = EXERCISE_IMAGES[ex.name]
+              return (
+                <div key={ex.id} className="rounded-lg border overflow-hidden">
+                  {image && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={image} alt={ex.name} className="w-full h-24 object-cover" />
+                  )}
+                  <div className="p-2 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">{ex.name}</p>
+                      <span className="text-sm font-bold text-orange-500">
+                        {ex.bestMax !== null ? `${ex.bestMax} kg` : "— kg"}
+                      </span>
+                    </div>
+                    <ProgressionChart history={ex.history} />
+                  </div>
                 </div>
-                <ProgressionChart history={ex.history} />
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </CardContent>

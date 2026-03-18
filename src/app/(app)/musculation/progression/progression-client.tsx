@@ -100,6 +100,12 @@ function ProgressionChart({ history }: { history: OneRepMaxEntry[] }) {
   )
 }
 
+const EXERCISE_IMAGES: Record<string, string> = {
+  "Squat": "/groups/squat.png",
+  "Développé couché": "/groups/developpe-couche.png",
+  "Soulevé de terre": "/groups/SDT.png",
+}
+
 // ─── Exercise Card ─────────────────────────────────────────────────────────────
 
 function ExerciseCard({ exercise }: { exercise: ExerciseRecord }) {
@@ -157,8 +163,20 @@ function ExerciseCard({ exercise }: { exercise: ExerciseRecord }) {
     })
   }
 
+  const image = EXERCISE_IMAGES[exercise.name]
+
   return (
-    <Card className="bg-background/80 backdrop-blur-sm">
+    <Card className="bg-background/80 backdrop-blur-sm overflow-hidden">
+      {/* Image de l'exercice */}
+      {image && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={image}
+          alt={exercise.name}
+          className="w-full h-36 object-cover"
+        />
+      )}
+
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-base">{exercise.name}</CardTitle>
