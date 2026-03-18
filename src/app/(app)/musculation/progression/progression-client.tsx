@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { TrendingUp, CalendarDays, CheckCircle2, Loader2 } from "lucide-react"
+import Link from "next/link"
+import { TrendingUp, CalendarDays, CheckCircle2, Loader2, ArrowLeft } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { save1RM, scheduleTest } from "./actions"
 import type { ExerciseRecord, OneRepMaxEntry } from "./page"
@@ -107,6 +108,7 @@ function ExerciseCard({ exercise }: { exercise: ExerciseRecord }) {
   const [reps, setReps] = useState("")
   const [directMax, setDirectMax] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   const bestMax = exercise.bestMax
@@ -149,6 +151,8 @@ function ExerciseCard({ exercise }: { exercise: ExerciseRecord }) {
         setWeight("")
         setReps("")
         setDirectMax("")
+        setSaved(true)
+        setTimeout(() => setSaved(false), 3000)
       }
     })
   }
@@ -243,11 +247,15 @@ function ExerciseCard({ exercise }: { exercise: ExerciseRecord }) {
         <button
           onClick={handleSave}
           disabled={isPending}
-          className="w-full rounded-lg py-2 text-sm font-semibold text-white disabled:opacity-50 flex items-center justify-center gap-2"
-          style={{ background: "linear-gradient(to right, #ea580c, #f97316)" }}
+          className="w-full rounded-lg py-2 text-sm font-semibold text-white disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
+          style={{ background: saved ? "linear-gradient(to right, #16a34a, #22c55e)" : "linear-gradient(to right, #ea580c, #f97316)" }}
         >
-          {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-          Enregistrer
+          {isPending ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : saved ? (
+            <CheckCircle2 className="h-3.5 w-3.5" />
+          ) : null}
+          {saved ? "Enregistré !" : "Enregistrer"}
         </button>
       </CardContent>
     </Card>
@@ -328,6 +336,17 @@ export function ProgressionClient({ exercises, lastEntryDate, hasScheduled }: Pr
         {exercises.map(ex => (
           <ExerciseCard key={ex.id} exercise={ex} />
         ))}
+      </div>
+
+      {/* Retour */}
+      <div className="flex justify-center pt-2">
+        <Link
+          href="/musculation"
+          className="flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour à la musculation
+        </Link>
       </div>
     </div>
   )
