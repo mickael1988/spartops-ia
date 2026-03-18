@@ -119,72 +119,82 @@ export function AgendaDrawer({ open, onClose, date, events, templates }: Props) 
           )}
 
           {/* Séances du jour */}
-          {hasEvents && events.map(event => (
-            <div key={event.id} className="rounded-xl border bg-card p-4 space-y-3">
-              <div>
-                <p className="font-semibold">{event.name}</p>
-                {event.exercises.length > 0 && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {event.exercises.slice(0, 3).map(e => e.name).join(" · ")}
-                    {event.exercises.length > 3 && " · …"}
-                  </p>
+          {hasEvents && events.map(event => {
+            const isTestEvent = event.name === "Test 1RM"
+            return (
+              <div key={event.id} className="rounded-xl border bg-card p-4 space-y-3">
+                <div>
+                  <p className="font-semibold">{event.name}</p>
+                  {isTestEvent ? (
+                    <p className="text-xs text-muted-foreground mt-1">Test de force — 1RM</p>
+                  ) : event.exercises.length > 0 ? (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {event.exercises.slice(0, 3).map(e => e.name).join(" · ")}
+                      {event.exercises.length > 3 && " · …"}
+                    </p>
+                  ) : null}
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      onClose()
+                      router.push(isTestEvent ? "/musculation/progression" : `/musculation/seance/${event.id}/live`)
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold text-white"
+                    style={{ background: "linear-gradient(to right, #3F5EFB, #F50535)" }}
+                  >
+                    <Play className="h-3.5 w-3.5" /> Démarrer
+                  </button>
+                  {!isTestEvent && (
+                    <button
+                      onClick={() => { onClose(); router.push(`/musculation/seance/${event.id}`) }}
+                      className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted transition-colors"
+                    >
+                      <Pencil className="h-3.5 w-3.5" /> Modifier
+                    </button>
+                  )}
+                </div>
+
+                {/* Reprogrammer */}
+                {reschedulingId === event.id ? (
+                  <div className="flex gap-2 pt-1">
+                    <input
+                      type="date"
+                      value={newDate}
+                      onChange={e => setNewDate(e.target.value)}
+                      className="flex-1 rounded-lg border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <button
+                      onClick={() => handleReschedule(event.id)}
+                      disabled={!newDate || isPending}
+                      className="rounded-lg border px-3 py-1.5 text-sm font-medium hover:bg-muted disabled:opacity-50 transition-colors flex items-center gap-1"
+                    >
+                      {isPending && <Loader2 className="h-3 w-3 animate-spin" />}
+                      OK
+                    </button>
+                    <button
+                      onClick={() => { setReschedulingId(null); setNewDate("") }}
+                      className="rounded-lg border px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setReschedulingId(event.id)
+                      setNewDate(toInputDate(new Date(event.scheduledAt)))
+                    }}
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <CalendarDays className="h-3.5 w-3.5" /> Changer la date
+                  </button>
                 )}
               </div>
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => { onClose(); router.push(`/musculation/seance/${event.id}/live`) }}
-                  className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold text-white"
-                  style={{ background: "linear-gradient(to right, #3F5EFB, #F50535)" }}
-                >
-                  <Play className="h-3.5 w-3.5" /> Démarrer
-                </button>
-                <button
-                  onClick={() => { onClose(); router.push(`/musculation/seance/${event.id}`) }}
-                  className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted transition-colors"
-                >
-                  <Pencil className="h-3.5 w-3.5" /> Modifier
-                </button>
-              </div>
-
-              {/* Reprogrammer */}
-              {reschedulingId === event.id ? (
-                <div className="flex gap-2 pt-1">
-                  <input
-                    type="date"
-                    value={newDate}
-                    onChange={e => setNewDate(e.target.value)}
-                    className="flex-1 rounded-lg border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                  <button
-                    onClick={() => handleReschedule(event.id)}
-                    disabled={!newDate || isPending}
-                    className="rounded-lg border px-3 py-1.5 text-sm font-medium hover:bg-muted disabled:opacity-50 transition-colors flex items-center gap-1"
-                  >
-                    {isPending && <Loader2 className="h-3 w-3 animate-spin" />}
-                    OK
-                  </button>
-                  <button
-                    onClick={() => { setReschedulingId(null); setNewDate("") }}
-                    className="rounded-lg border px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => {
-                    setReschedulingId(event.id)
-                    setNewDate(toInputDate(new Date(event.scheduledAt)))
-                  }}
-                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <CalendarDays className="h-3.5 w-3.5" /> Changer la date
-                </button>
-              )}
-            </div>
-          ))}
+            )
+          })}
 
           {/* Jour vide : planifier depuis templates */}
           {!hasEvents && date && (
