@@ -25,6 +25,7 @@ model User {
   accounts      Account[]
   workouts      Workout[]
   cardioSessions UserCardioSession[]
+  oneRepMaxes   OneRepMax[]
 }
 
 model Session {
@@ -94,8 +95,10 @@ model Exercise {
   equipment           String?
   defaultReps         Int?
   defaultRestSeconds  Int?
+  isFundamental       Boolean  @default(false)
 
   workoutExercises WorkoutExercise[]
+  oneRepMaxes      OneRepMax[]
 }
 
 enum WorkoutStatus {
@@ -145,6 +148,19 @@ model SetLog {
   reps              Int
   weight            Float?
   completedAt       DateTime        @default(now())
+}
+
+model OneRepMax {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exerciseId   String
+  exercise     Exercise @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  estimatedMax Float
+  recordedAt   DateTime @default(now())
+  inputWeight  Float?
+  inputReps    Int?
+  isManual     Boolean  @default(false)
 }
 
 // ==========================================
