@@ -1,8 +1,7 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import { ChevronRight } from "lucide-react"
-import { headers } from "next/headers"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/session"
 import { prisma } from "@/lib/prisma"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -14,7 +13,7 @@ export default async function WorkoutDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession()
   if (!session) redirect("/login")
 
   const workout = await prisma.workout.findFirst({

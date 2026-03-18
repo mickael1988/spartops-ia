@@ -1,15 +1,14 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { headers } from "next/headers"
 import { ArrowRight, PlusCircle, Dumbbell, TrendingUp } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { prisma } from "@/lib/prisma"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/session"
 
 const BEAM = "conic-gradient(from 0deg, transparent 0%, transparent 30%, #3F5EFB 50%, #F50535 58%, transparent 72%, transparent 100%)"
 
 export default async function MusculationPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession()
   if (!session) redirect("/login")
 
   const groups = await prisma.muscleGroup.findMany({

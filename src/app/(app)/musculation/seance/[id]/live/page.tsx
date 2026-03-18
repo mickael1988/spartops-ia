@@ -1,6 +1,5 @@
 import { notFound, redirect } from "next/navigation"
-import { headers } from "next/headers"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/session"
 import { prisma } from "@/lib/prisma"
 import { startFromTemplate } from "../../actions"
 import { WorkoutLive } from "./workout-live"
@@ -11,7 +10,7 @@ export default async function WorkoutLivePage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession()
   if (!session) redirect("/login")
 
   const workout = await prisma.workout.findFirst({

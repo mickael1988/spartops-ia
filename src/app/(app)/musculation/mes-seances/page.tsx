@@ -1,14 +1,13 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { headers } from "next/headers"
 import { ChevronRight, PlusCircle } from "lucide-react"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/session"
 import { prisma } from "@/lib/prisma"
 import { Card, CardContent } from "@/components/ui/card"
 import { StartButton } from "./start-button"
 
 export default async function MesSeancesPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession()
   if (!session) redirect("/login")
 
   const templates = await prisma.workout.findMany({

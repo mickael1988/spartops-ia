@@ -1,6 +1,5 @@
 import Link from "next/link"
-import { auth } from "@/lib/auth"
-import { headers } from "next/headers"
+import { getSession } from "@/lib/session"
 import { Dumbbell, Activity, Apple, User, ArrowRight } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -34,7 +33,7 @@ const sections = [
 ]
 
 export default async function DashboardPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession()
 
   return (
     <div className="space-y-6">

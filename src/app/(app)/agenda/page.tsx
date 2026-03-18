@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation"
-import { headers } from "next/headers"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/session"
 import { prisma } from "@/lib/prisma"
 import { AgendaCalendar } from "./agenda-calendar"
 
@@ -17,7 +16,7 @@ export type Template = {
 }
 
 export default async function AgendaPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession()
   if (!session) redirect("/login")
 
   const now = new Date()

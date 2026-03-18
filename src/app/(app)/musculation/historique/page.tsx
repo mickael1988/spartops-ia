@@ -1,8 +1,7 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { headers } from "next/headers"
 import { ChevronRight, ArrowRight } from "lucide-react"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/session"
 import { prisma } from "@/lib/prisma"
 import { Card, CardContent } from "@/components/ui/card"
 
@@ -16,7 +15,7 @@ function formatDuration(startedAt: Date | null, completedAt: Date | null): strin
 }
 
 export default async function HistoriquePage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession()
   if (!session) redirect("/login")
 
   const workouts = await prisma.workout.findMany({

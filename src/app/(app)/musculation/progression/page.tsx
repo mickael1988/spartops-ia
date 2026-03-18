@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation"
-import { headers } from "next/headers"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/session"
 import { prisma } from "@/lib/prisma"
 import { ProgressionClient } from "./progression-client"
 
@@ -21,7 +20,7 @@ export type ExerciseRecord = {
 }
 
 export default async function ProgressionPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession()
   if (!session) redirect("/login")
 
   const [exercises, allEntries, scheduledTest] = await Promise.all([

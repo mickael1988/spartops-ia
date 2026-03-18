@@ -1,13 +1,12 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { headers } from "next/headers"
 import { ChevronRight } from "lucide-react"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/session"
 import { prisma } from "@/lib/prisma"
 import { ExerciseForm } from "./exercise-form"
 
 export default async function NouvelExercicePage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession()
   if (!session) redirect("/login")
 
   const muscleGroups = await prisma.muscleGroup.findMany({

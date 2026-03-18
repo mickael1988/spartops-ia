@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation"
-import { auth } from "@/lib/auth"
-import { headers } from "next/headers"
+import { getSession } from "@/lib/session"
 import { Header } from "@/components/layout/header"
 import { SidebarContent } from "@/components/layout/sidebar"
 
@@ -9,7 +8,7 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode
 }) {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession()
 
   if (!session) {
     redirect("/login")

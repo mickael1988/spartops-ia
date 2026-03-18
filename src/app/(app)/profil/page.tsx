@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation"
-import { headers } from "next/headers"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/session"
 import { prisma } from "@/lib/prisma"
 import { ProfilForm } from "./profil-form"
 import { ProfilActivityChart, type WeekData } from "./profil-activity-chart"
@@ -49,7 +48,7 @@ const MOIS_COURT = ["Jan","Fév","Mar","Avr","Mai","Juin",
                     "Juil","Août","Sep","Oct","Nov","Déc"]
 
 export default async function ProfilPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession()
   if (!session) redirect("/login")
 
   const user = await prisma.user.findUniqueOrThrow({ where: { id: session.user.id } })
