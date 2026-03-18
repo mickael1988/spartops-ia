@@ -13,6 +13,13 @@ export async function updateProfile(formData: FormData): Promise<{ error?: strin
   if (!name) return { error: "Le nom est requis" }
   if (name.length > 100) return { error: "Nom trop long (max 100 caractères)" }
 
+  const ageRaw = (formData.get("age") as string)?.trim()
+  let age: number | null = null
+  if (ageRaw !== "" && ageRaw != null) {
+    age = parseInt(ageRaw, 10)
+    if (isNaN(age) || age < 1 || age > 120) return { error: "Âge invalide (entre 1 et 120)" }
+  }
+
   const imageFile = formData.get("image") as File | null
 
   let imageUrl: string | undefined
@@ -42,6 +49,7 @@ export async function updateProfile(formData: FormData): Promise<{ error?: strin
     where: { id: session.user.id },
     data: {
       name,
+      age,
       updatedAt: new Date(),
       ...(imageUrl ? { image: imageUrl } : {}),
     },

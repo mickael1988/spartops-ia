@@ -48,7 +48,12 @@ export function ExerciseCard({ exercise }: Props) {
       <CardContent className="flex flex-col flex-1 gap-3">
         <p className="text-sm text-muted-foreground line-clamp-2">{exercise.description}</p>
         {exercise.equipment && (
-          <p className="text-xs text-muted-foreground"><span aria-hidden="true">🔧</span> {exercise.equipment}</p>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs font-semibold bg-gradient-to-r from-orange-500 to-amber-400 bg-clip-text text-transparent">
+              Matériel nécessaire
+            </span>
+            <p className="text-xs text-muted-foreground">{exercise.equipment}</p>
+          </div>
         )}
         <button
           onClick={handleToggle}

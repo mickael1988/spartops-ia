@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState, useTransition } from "react"
-import { Camera, User, Mail, Calendar, Loader2, CheckCircle, Pencil, X } from "lucide-react"
+import { Camera, User, Mail, Calendar, Loader2, CheckCircle, Pencil, X, Hash } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -13,6 +13,7 @@ type Props = {
     name: string
     email: string
     image: string | null
+    age: number | null
     createdAt: Date
   }
   initials: string
@@ -22,6 +23,7 @@ type Props = {
 export function ProfilForm({ user, initials, dateInscription }: Props) {
   const [isEditing, setIsEditing] = useState(false)
   const [name, setName] = useState(user.name)
+  const [age, setAge] = useState<string>(user.age != null ? String(user.age) : "")
   const [preview, setPreview] = useState<string | null>(user.image)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -32,6 +34,7 @@ export function ProfilForm({ user, initials, dateInscription }: Props) {
   function handleCancel() {
     setIsEditing(false)
     setName(user.name)
+    setAge(user.age != null ? String(user.age) : "")
     setPreview(user.image)
     setImageFile(null)
     setError(null)
@@ -53,6 +56,7 @@ export function ProfilForm({ user, initials, dateInscription }: Props) {
 
     const formData = new FormData()
     formData.set("name", name)
+    formData.set("age", age)
     if (imageFile) formData.set("image", imageFile)
 
     startTransition(async () => {
@@ -157,6 +161,28 @@ export function ProfilForm({ user, initials, dateInscription }: Props) {
               />
             ) : (
               <p className="px-4 py-2.5 text-sm font-medium">{user.email}</p>
+            )}
+          </div>
+
+          {/* Âge */}
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide">
+              <Hash className="h-3.5 w-3.5" /> Âge
+            </label>
+            {isEditing ? (
+              <input
+                type="number"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                min={1}
+                max={120}
+                placeholder="ex : 25"
+                className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            ) : (
+              <p className="px-4 py-2.5 text-sm font-medium">
+                {user.age != null ? `${user.age} ans` : <span className="text-muted-foreground italic">Non renseigné</span>}
+              </p>
             )}
           </div>
 
