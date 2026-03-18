@@ -342,7 +342,7 @@ export function ProgressionClient({ exercises, lastEntryDate, hasScheduled }: Pr
       <div className="flex justify-center pt-2">
         <Link
           href="/musculation"
-          className="flex items-center gap-2 rounded-xl px-12 py-4 text-lg font-semibold text-white transition-colors hover:opacity-90"
+          className="flex items-center gap-2 rounded-xl px-16 py-2.5 text-lg font-semibold text-white transition-colors hover:opacity-90"
           style={{ background: "linear-gradient(to right, #3F5EFB, #F50535)" }}
         >
           <ArrowLeft className="h-4 w-4" />
