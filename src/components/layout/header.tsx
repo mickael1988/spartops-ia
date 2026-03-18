@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { SidebarContent } from "@/components/layout/sidebar"
 import { signOut } from "@/lib/auth-client"
@@ -44,7 +44,8 @@ export function Header({ userName, userEmail }: HeaderProps) {
             <Menu className="h-5 w-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0">
+        <SheetContent side="left" className="w-64 p-0" aria-describedby={undefined}>
+          <SheetTitle className="sr-only">Navigation</SheetTitle>
           <SidebarContent />
         </SheetContent>
       </Sheet>
