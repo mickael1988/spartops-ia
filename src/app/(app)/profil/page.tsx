@@ -3,6 +3,8 @@ import { getSession } from "@/lib/session"
 import { prisma } from "@/lib/prisma"
 import { ProfilForm } from "./profil-form"
 import { ProfilActivityChart, type WeekData } from "./profil-activity-chart"
+import { Profil1RMChart } from "./profil-1rm-chart"
+import type { ExerciseRecord } from "@/app/(app)/musculation/progression/page"
 
 function buildChartData(
   workouts: { completedAt: Date | null }[],
@@ -66,17 +68,44 @@ export default async function ProfilPage() {
     1
   ))
 
-  const workouts = await prisma.workout.findMany({
+  const [workouts, fundamentalExercises, oneRepMaxes] = await Promise.all([
+    prisma.workout.findMany({
     where: {
       userId: user.id,
       status: "TERMINEE",
       isTemplate: false,
       completedAt: { gte: debutMoisPrecedent, lt: debutMoisSuivant },
     },
-    select: { completedAt: true },
-  })
+      select: { completedAt: true },
+    }),
+    prisma.exercise.findMany({
+      where: { isFundamental: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.oneRepMax.findMany({
+      where: { userId: user.id },
+      orderBy: { recordedAt: "desc" },
+    }),
+  ])
 
   const chartData = buildChartData(workouts, now)
+
+  const exerciseRecords: ExerciseRecord[] = fundamentalExercises.map(ex => {
+    const exEntries = oneRepMaxes.filter(e => e.exerciseId === ex.id)
+    return {
+      id: ex.id,
+      name: ex.name,
+      bestMax: exEntries.length > 0 ? Math.max(...exEntries.map(e => e.estimatedMax)) : null,
+      history: exEntries.slice(0, 6).reverse().map(e => ({
+        id: e.id,
+        estimatedMax: e.estimatedMax,
+        recordedAt: e.recordedAt.toISOString(),
+        inputWeight: e.inputWeight,
+        inputReps: e.inputReps,
+        isManual: e.isManual,
+      })),
+    }
+  })
 
   const moisCourantIdx   = now.getUTCMonth()
   const moisPrecedentIdx = moisCourantIdx === 0 ? 11 : moisCourantIdx - 1
@@ -116,6 +145,8 @@ export default async function ProfilPage() {
         initials={initials}
         dateInscription={dateInscription}
       />
+
+      <Profil1RMChart exercises={exerciseRecords} />
 
       <ProfilActivityChart
         data={chartData}
