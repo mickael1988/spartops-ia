@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { startWorkout, completeSet, finishWorkout } from "../../actions"
 import type { Workout, WorkoutExercise, Exercise, MuscleGroup } from "@/generated/prisma/client"
@@ -124,19 +124,20 @@ function QuitDialog({ open, onCancel, onConfirm }: { open: boolean; onCancel: ()
   if (!open) return null
   return (
     <div
-      className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
       onClick={onCancel}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="quit-dialog-title"
+        aria-describedby="quit-dialog-desc"
         className="bg-background rounded-2xl shadow-2xl p-6 w-full max-w-sm space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="space-y-1">
           <h2 id="quit-dialog-title" className="text-lg font-bold">Quitter la séance ?</h2>
-          <p className="text-sm text-muted-foreground">
+          <p id="quit-dialog-desc" className="text-sm text-muted-foreground">
             Ton avancement est sauvegardé. Tu pourras reprendre là où tu t&apos;es arrêté.
           </p>
         </div>
@@ -188,6 +189,7 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
   const exerciseRefs = useRef<(HTMLDivElement | null)[]>([])
   const router = useRouter()
   const [showQuitDialog, setShowQuitDialog] = useState(false)
+  const handleCancelQuit = useCallback(() => setShowQuitDialog(false), [])
 
   // Premier exercice non terminé
   const activeIndex = workout.exercises.findIndex(
@@ -513,7 +515,7 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
 
       <QuitDialog
         open={showQuitDialog}
-        onCancel={() => setShowQuitDialog(false)}
+        onCancel={handleCancelQuit}
         onConfirm={() => { stopRest(); router.push("/musculation") }}
       />
 
