@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { ArrowRight, PlusCircle, Dumbbell, TrendingUp } from "lucide-react"
+import { ArrowRight, PlusCircle, Dumbbell, TrendingUp, PlayCircle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { prisma } from "@/lib/prisma"
 import { getSession } from "@/lib/session"
@@ -16,12 +16,62 @@ export default async function MusculationPage() {
     orderBy: { name: "asc" },
   })
 
+  const inProgressWorkout = await prisma.workout.findFirst({
+    where: { userId: session.user.id, status: "EN_COURS", isTemplate: false },
+    select: {
+      id: true,
+      name: true,
+      startedAt: true,
+      exercises: {
+        select: { completedSets: true, sets: true },
+      },
+    },
+    orderBy: { startedAt: "desc" },
+  })
+
+  const inProgressStats = inProgressWorkout
+    ? {
+        completedExercises: inProgressWorkout.exercises.filter(
+          (e) => e.completedSets >= e.sets
+        ).length,
+        totalExercises: inProgressWorkout.exercises.length,
+      }
+    : null
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Musculation</h1>
         <p className="text-muted-foreground mt-1">Choisissez un groupe musculaire</p>
       </div>
+
+      {/* Bannière séance en cours — placée après le titre, avant les cartes d'action */}
+      {inProgressWorkout && inProgressStats && (
+        <Link
+          href={`/musculation/seance/${inProgressWorkout.id}/live`}
+          className="flex items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 px-5 py-4 hover:bg-primary/10 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="w-fit rounded-xl p-2 shrink-0"
+              style={{ background: "linear-gradient(135deg, #3F5EFB, #F50535)" }}
+            >
+              <PlayCircle className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">{inProgressWorkout.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {inProgressStats.completedExercises} / {inProgressStats.totalExercises} exercice
+                {inProgressStats.totalExercises > 1 ? "s" : ""} terminé
+                {inProgressStats.totalExercises > 1 ? "s" : ""}
+              </p>
+            </div>
+          </div>
+          <span className="flex items-center gap-1 text-sm font-semibold shrink-0" style={{ color: "#3F5EFB" }}>
+            Reprendre <ArrowRight className="h-4 w-4" />
+          </span>
+        </Link>
+      )}
 
       {/* Cartes d'action — centrées, côte à côte */}
       <div className="flex flex-col sm:flex-row justify-center gap-4">
