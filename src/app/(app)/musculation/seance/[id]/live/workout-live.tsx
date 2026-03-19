@@ -13,6 +13,103 @@ type WorkoutWithExercises = Workout & {
   exercises: ExerciseWithRelations[]
 }
 
+// ─── Rest Timer Overlay ────────────────────────────────────────────────────────
+
+type RestTimerProps = {
+  active: boolean
+  remaining: number
+  total: number
+  exerciseName: string
+  onAdd: () => void
+  onSubtract: () => void
+  onSkip: () => void
+}
+
+function RestTimerOverlay({ active, remaining, total, exerciseName, onAdd, onSubtract, onSkip }: RestTimerProps) {
+  const SIZE = 120
+  const STROKE = 8
+  const R = (SIZE - STROKE) / 2
+  const CIRCUMFERENCE = 2 * Math.PI * R
+  const progress = total > 0 ? remaining / total : 0
+  const dashOffset = CIRCUMFERENCE * (1 - progress)
+  const isUrgent = remaining <= 5 && remaining > 0
+
+  return (
+    <div
+      className={`fixed bottom-0 left-0 right-0 z-50 transition-transform duration-300 ease-in-out ${
+        active ? "translate-y-0" : "translate-y-full"
+      }`}
+    >
+      <div className="mx-auto max-w-lg bg-background border-t shadow-2xl rounded-t-2xl px-6 py-5">
+        <p className="text-center text-xs text-muted-foreground mb-4 font-medium uppercase tracking-wide">
+          Repos — {exerciseName}
+        </p>
+
+        <div className="flex items-center justify-center gap-8">
+          {/* Bouton -15s */}
+          <button
+            onClick={onSubtract}
+            disabled={remaining <= 15}
+            className="rounded-xl border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted transition-colors disabled:opacity-40"
+          >
+            −15s
+          </button>
+
+          {/* Cercle SVG */}
+          <div className="relative flex items-center justify-center">
+            <svg width={SIZE} height={SIZE} className="-rotate-90" aria-hidden="true">
+              <circle
+                cx={SIZE / 2}
+                cy={SIZE / 2}
+                r={R}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={STROKE}
+                className="text-muted/40"
+              />
+              <circle
+                cx={SIZE / 2}
+                cy={SIZE / 2}
+                r={R}
+                fill="none"
+                strokeWidth={STROKE}
+                strokeLinecap="round"
+                strokeDasharray={CIRCUMFERENCE}
+                strokeDashoffset={dashOffset}
+                stroke={isUrgent ? "#ef4444" : "#3F5EFB"}
+                style={{ transition: "stroke-dashoffset 1s linear, stroke 0.3s" }}
+              />
+            </svg>
+            <span
+              role="timer"
+              className={`absolute text-2xl font-mono font-bold tabular-nums ${
+                isUrgent ? "text-red-500" : "text-foreground"
+              }`}
+            >
+              {remaining}
+            </span>
+          </div>
+
+          {/* Bouton +15s */}
+          <button
+            onClick={onAdd}
+            className="rounded-xl border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted transition-colors"
+          >
+            +15s
+          </button>
+        </div>
+
+        <button
+          onClick={onSkip}
+          className="mt-4 w-full rounded-xl py-2.5 text-sm font-semibold text-muted-foreground hover:bg-muted transition-colors border"
+        >
+          Passer
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
   const [started, setStarted] = useState(workout.status === "EN_COURS")
   const [starting, setStarting] = useState(false)
@@ -35,6 +132,8 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
   const [restActive, setRestActive] = useState(false)
   const [restRemaining, setRestRemaining] = useState(0)
   const [restForId, setRestForId] = useState<string | null>(null)
+  const [restTotal, setRestTotal] = useState(0)
+  const [restExerciseName, setRestExerciseName] = useState("")
   const restRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const exerciseRefs = useRef<(HTMLDivElement | null)[]>([])
   const router = useRouter()
@@ -90,15 +189,19 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
 
   function startRest(seconds: number, weId: string) {
     if (restRef.current) clearInterval(restRef.current)
+    const name = workout.exercises.find(we => we.id === weId)?.exercise.name ?? ""
     setRestRemaining(seconds)
+    setRestTotal(seconds)
     setRestActive(true)
     setRestForId(weId)
+    setRestExerciseName(name)
     restRef.current = setInterval(() => {
       setRestRemaining((prev) => {
         if (prev <= 1) {
           clearInterval(restRef.current!)
           setRestActive(false)
           setRestForId(null)
+          setRestTotal(0)
           triggerRestEnd()
           return 0
         }
@@ -112,6 +215,7 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
     setRestActive(false)
     setRestRemaining(0)
     setRestForId(null)
+    setRestTotal(0)
   }
 
   async function handleStart() {
@@ -177,7 +281,7 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
   }
 
   return (
-    <div className="space-y-4 max-w-lg mx-auto pb-24">
+    <div className={`space-y-4 max-w-lg mx-auto transition-all ${restActive ? "pb-56" : "pb-24"}`}>
       {/* Header sticky */}
       <div className="sticky top-0 z-10 flex items-center justify-between py-3 bg-background/80 backdrop-blur-sm text-sm text-muted-foreground">
         <span>
@@ -343,34 +447,22 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
                   ))}
                 </div>
 
-                {/* Chrono repos */}
-                {restActive && restForId === we.id && (
-                  <div className="rounded-2xl border-2 border-blue-300 bg-blue-50 dark:bg-blue-900/20 p-4 space-y-3 text-center">
-                    <p className="text-sm font-medium text-blue-600 dark:text-blue-300">😴 Temps de repos</p>
-                    <p className="text-4xl font-mono font-bold text-blue-700 dark:text-blue-200">
-                      {formatTime(restRemaining)}
-                    </p>
-                    <div className="flex gap-2 justify-center">
-                      <button
-                        onClick={() => setRestRemaining((r) => r + 15)}
-                        className="rounded-lg border border-blue-300 px-3 py-1.5 text-sm font-medium text-blue-600"
-                      >+15s</button>
-                      <button
-                        onClick={() => startRest(we.restSeconds, we.id)}
-                        className="rounded-lg border border-blue-300 px-3 py-1.5 text-sm font-medium text-blue-600"
-                      >Reset</button>
-                      <button
-                        onClick={stopRest}
-                        className="rounded-lg border border-blue-300 px-3 py-1.5 text-sm font-medium text-blue-600"
-                      >Passer</button>
-                    </div>
-                  </div>
-                )}
               </>
             )}
           </div>
         )
       })}
+
+      {/* Overlay timer de repos */}
+      <RestTimerOverlay
+        active={restActive}
+        remaining={restRemaining}
+        total={restTotal}
+        exerciseName={restExerciseName}
+        onAdd={() => setRestRemaining(r => r + 15)}
+        onSubtract={() => setRestRemaining(r => Math.max(16, r) - 15)}
+        onSkip={stopRest}
+      />
 
       {/* Bouton terminer — visible quand tout est fait */}
       {allDone && (
