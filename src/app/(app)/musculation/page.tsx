@@ -21,7 +21,6 @@ export default async function MusculationPage() {
     select: {
       id: true,
       name: true,
-      startedAt: true,
       exercises: {
         select: { completedSets: true, sets: true },
       },
