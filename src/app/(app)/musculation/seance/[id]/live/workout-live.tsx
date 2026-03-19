@@ -340,7 +340,7 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
         <button
           onClick={() => setShowQuitDialog(true)}
           aria-label="Quitter la séance"
-          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors justify-self-start"
+          className="flex items-center gap-1 text-sm text-red-500 hover:text-red-600 transition-colors justify-self-start"
         >
           ✕ Quitter
         </button>
