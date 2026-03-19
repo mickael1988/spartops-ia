@@ -110,6 +110,56 @@ function RestTimerOverlay({ active, remaining, total, exerciseName, onAdd, onSub
   )
 }
 
+// ─── Quit Dialog ────────────────────────────────────────────────────────────────
+
+function QuitDialog({ open, onCancel, onConfirm }: { open: boolean; onCancel: () => void; onConfirm: () => void }) {
+  // Fermeture au clavier (Escape)
+  useEffect(() => {
+    if (!open) return
+    function handleKey(e: KeyboardEvent) { if (e.key === "Escape") onCancel() }
+    document.addEventListener("keydown", handleKey)
+    return () => document.removeEventListener("keydown", handleKey)
+  }, [open, onCancel])
+
+  if (!open) return null
+  return (
+    <div
+      className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+      onClick={onCancel}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="quit-dialog-title"
+        className="bg-background rounded-2xl shadow-2xl p-6 w-full max-w-sm space-y-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="space-y-1">
+          <h2 id="quit-dialog-title" className="text-lg font-bold">Quitter la séance ?</h2>
+          <p className="text-sm text-muted-foreground">
+            Ton avancement est sauvegardé. Tu pourras reprendre là où tu t&apos;es arrêté.
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 rounded-xl border py-2.5 text-sm font-semibold hover:bg-muted transition-colors"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 rounded-xl py-2.5 text-sm font-semibold text-white transition-colors"
+            style={{ background: "linear-gradient(to right, #3F5EFB, #F50535)" }}
+          >
+            Quitter
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
   const [started, setStarted] = useState(workout.status === "EN_COURS")
   const [starting, setStarting] = useState(false)
@@ -137,6 +187,7 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
   const restRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const exerciseRefs = useRef<(HTMLDivElement | null)[]>([])
   const router = useRouter()
+  const [showQuitDialog, setShowQuitDialog] = useState(false)
 
   // Premier exercice non terminé
   const activeIndex = workout.exercises.findIndex(
@@ -283,13 +334,20 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
   return (
     <div className={`space-y-4 max-w-lg mx-auto transition-all ${restActive ? "pb-56" : "pb-24"}`}>
       {/* Header sticky */}
-      <div className="sticky top-0 z-10 flex items-center justify-between py-3 bg-background/80 backdrop-blur-sm text-sm text-muted-foreground">
-        <span>
+      <div className="sticky top-0 z-10 grid grid-cols-3 items-center py-3 bg-background/80 backdrop-blur-sm text-sm text-muted-foreground">
+        <button
+          onClick={() => setShowQuitDialog(true)}
+          aria-label="Quitter la séance"
+          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors justify-self-start"
+        >
+          ✕ Quitter
+        </button>
+        <span className="text-center">
           {allDone
             ? "✅ Tous les exercices terminés"
             : `Exercice ${activeIndex + 1} / ${workout.exercises.length}`}
         </span>
-        <span className="font-mono font-bold text-base text-foreground">
+        <span className="font-mono font-bold text-base text-foreground justify-self-end">
           ⏱ {formatTime(elapsedSeconds)}
         </span>
       </div>
@@ -452,6 +510,12 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
           </div>
         )
       })}
+
+      <QuitDialog
+        open={showQuitDialog}
+        onCancel={() => setShowQuitDialog(false)}
+        onConfirm={() => { stopRest(); router.push("/musculation") }}
+      />
 
       {/* Overlay timer de repos */}
       <RestTimerOverlay
