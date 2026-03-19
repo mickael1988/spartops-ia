@@ -8,7 +8,6 @@ import {
   Apple,
   User,
   LayoutDashboard,
-  Zap,
   History,
   BookOpen,
   CalendarDays,
@@ -65,7 +64,8 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     <div className="flex h-full flex-col">
       {/* Logo */}
       <div className="flex items-center gap-2 px-6 py-5 border-b">
-        <Zap className="h-6 w-6 text-primary" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/spartan-hero.png" alt="SpartOps" className="h-8 w-8 object-contain" />
         <span className="text-xl font-bold">SpartOps</span>
       </div>
 
