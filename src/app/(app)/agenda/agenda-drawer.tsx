@@ -104,7 +104,7 @@ export function AgendaDrawer({ open, onClose, date, events, templates }: Props) 
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 hover:bg-muted transition-colors"
+            className="rounded-lg p-1.5 hover:bg-muted active:bg-muted transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -150,7 +150,7 @@ export function AgendaDrawer({ open, onClose, date, events, templates }: Props) 
                   {!isTestEvent && (
                     <button
                       onClick={() => { onClose(); router.push(`/musculation/seance/${event.id}`) }}
-                      className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted transition-colors"
+                      className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted active:bg-muted transition-colors"
                     >
                       <Pencil className="h-3.5 w-3.5" /> Modifier
                     </button>
@@ -169,14 +169,14 @@ export function AgendaDrawer({ open, onClose, date, events, templates }: Props) 
                     <button
                       onClick={() => handleReschedule(event.id)}
                       disabled={!newDate || isPending}
-                      className="rounded-lg border px-3 py-1.5 text-sm font-medium hover:bg-muted disabled:opacity-50 transition-colors flex items-center gap-1"
+                      className="rounded-lg border px-3 py-1.5 text-sm font-medium hover:bg-muted active:bg-muted disabled:opacity-50 transition-colors flex items-center gap-1"
                     >
                       {isPending && <Loader2 className="h-3 w-3 animate-spin" />}
                       OK
                     </button>
                     <button
                       onClick={() => { setReschedulingId(null); setNewDate("") }}
-                      className="rounded-lg border px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
+                      className="rounded-lg border px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted active:bg-muted transition-colors"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -210,7 +210,7 @@ export function AgendaDrawer({ open, onClose, date, events, templates }: Props) 
                       key={t.id}
                       onClick={() => handleAssign(t.id)}
                       disabled={isPending}
-                      className="w-full text-left rounded-xl border bg-card px-4 py-3 text-sm font-medium hover:border-primary hover:text-primary transition-colors disabled:opacity-50 flex items-center justify-between"
+                      className="w-full text-left rounded-xl border bg-card px-4 py-3 text-sm font-medium hover:border-primary hover:text-primary active:border-primary active:text-primary transition-colors disabled:opacity-50 flex items-center justify-between"
                     >
                       {t.name}
                       {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
@@ -229,7 +229,7 @@ export function AgendaDrawer({ open, onClose, date, events, templates }: Props) 
                   onClose()
                   router.push(`/musculation/seance/nouvelle?date=${toInputDate(date)}`)
                 }}
-                className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-3 text-sm font-medium text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-3 text-sm font-medium text-muted-foreground hover:border-primary hover:text-primary active:border-primary active:text-primary transition-colors"
               >
                 <Plus className="h-4 w-4" /> Créer une nouvelle séance
               </button>

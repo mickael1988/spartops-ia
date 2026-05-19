@@ -53,7 +53,7 @@ export default async function DashboardPage() {
           const Icon = section.icon
           return (
             <Link key={section.href} href={section.href}>
-              <div className="relative rounded-lg p-[2px] overflow-hidden group/card h-full transition-all hover:-translate-y-0.5 hover:shadow-md">
+              <div className="relative rounded-lg p-[2px] overflow-hidden group/card h-full transition-all hover:-translate-y-0.5 hover:shadow-md active:scale-[0.97] active:shadow-none">
                 <div
                   className="absolute inset-[-200%] opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 animate-border-beam pointer-events-none"
                   style={{ background: BEAM }}

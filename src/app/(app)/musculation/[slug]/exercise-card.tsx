@@ -60,7 +60,7 @@ export function ExerciseCard({ exercise }: Props) {
           className={`mt-auto w-full rounded-xl py-2 text-sm font-semibold transition-colors ${
             inCart
               ? "bg-primary/10 text-primary border border-primary"
-              : "border hover:border-primary hover:text-primary"
+              : "border hover:border-primary hover:text-primary active:border-primary active:text-primary"
           }`}
         >
           {inCart ? "✅ Dans la séance — Retirer" : "+ Ajouter à la séance"}

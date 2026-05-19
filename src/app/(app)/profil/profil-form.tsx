@@ -108,7 +108,7 @@ export function ProfilForm({ user, initials, dateInscription }: Props) {
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-1.5 rounded-xl border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
+                className="flex items-center gap-1.5 rounded-xl border px-4 py-2 text-sm font-medium hover:bg-muted active:bg-muted transition-colors"
               >
                 <Pencil className="h-4 w-4" /> Modifier
               </button>
@@ -116,7 +116,7 @@ export function ProfilForm({ user, initials, dateInscription }: Props) {
               <button
                 type="button"
                 onClick={handleCancel}
-                className="flex items-center gap-1.5 rounded-xl border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors text-muted-foreground"
+                className="flex items-center gap-1.5 rounded-xl border px-4 py-2 text-sm font-medium hover:bg-muted active:bg-muted transition-colors text-muted-foreground"
               >
                 <X className="h-4 w-4" /> Annuler
               </button>

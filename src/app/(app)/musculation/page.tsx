@@ -48,7 +48,7 @@ export default async function MusculationPage() {
       {inProgressWorkout && inProgressStats && (
         <Link
           href={`/musculation/seance/${inProgressWorkout.id}/live`}
-          className="flex items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 px-5 py-4 hover:bg-primary/10 transition-colors"
+          className="flex items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 px-5 py-4 hover:bg-primary/10 active:bg-primary/15 transition-colors"
         >
           <div className="flex items-center gap-3">
             <div
@@ -77,7 +77,7 @@ export default async function MusculationPage() {
 
         {/* Créer une séance */}
         <Link href="/musculation/seance/nouvelle" className="w-full sm:max-w-xs">
-          <div className="relative rounded-lg p-[2px] overflow-hidden group/create transition-all hover:-translate-y-1 hover:shadow-lg h-full">
+          <div className="relative rounded-lg p-[2px] overflow-hidden group/create transition-all hover:-translate-y-1 hover:shadow-lg active:scale-[0.97] active:shadow-none h-full">
             <div className="absolute inset-[-200%] animate-border-beam pointer-events-none" style={{ background: BEAM }} />
             <Card className="relative z-10 bg-card border-0 h-full">
               <CardHeader className="pb-3">
@@ -102,7 +102,7 @@ export default async function MusculationPage() {
 
         {/* Créer un exercice */}
         <Link href="/musculation/exercice/nouveau" className="w-full sm:max-w-xs">
-          <div className="relative rounded-lg p-[2px] overflow-hidden group/exercise transition-all hover:-translate-y-1 hover:shadow-lg h-full">
+          <div className="relative rounded-lg p-[2px] overflow-hidden group/exercise transition-all hover:-translate-y-1 hover:shadow-lg active:scale-[0.97] active:shadow-none h-full">
             <div className="absolute inset-[-200%] opacity-0 group-hover/exercise:opacity-100 transition-opacity duration-300 animate-border-beam pointer-events-none" style={{ background: BEAM }} />
             <div className="absolute inset-0 rounded-lg border border-border group-hover/exercise:border-transparent transition-colors pointer-events-none" />
             <Card className="relative z-10 bg-card border-0 h-full">
@@ -128,7 +128,7 @@ export default async function MusculationPage() {
 
         {/* Tester mon 1RM */}
         <Link href="/musculation/progression" className="w-full sm:max-w-xs">
-          <div className="relative rounded-lg p-[2px] overflow-hidden group/1rm transition-all hover:-translate-y-1 hover:shadow-lg h-full">
+          <div className="relative rounded-lg p-[2px] overflow-hidden group/1rm transition-all hover:-translate-y-1 hover:shadow-lg active:scale-[0.97] active:shadow-none h-full">
             <div className="absolute inset-[-200%] opacity-0 group-hover/1rm:opacity-100 transition-opacity duration-300 animate-border-beam pointer-events-none" style={{ background: BEAM }} />
             <div className="absolute inset-0 rounded-lg border border-border group-hover/1rm:border-transparent transition-colors pointer-events-none" />
             <Card className="relative z-10 bg-card border-0 h-full">
@@ -160,7 +160,7 @@ export default async function MusculationPage() {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {groups.map((group) => (
             <Link key={group.id} href={`/musculation/${group.slug}`}>
-              <div className="relative rounded-lg p-[2px] overflow-hidden group/card h-full transition-all hover:-translate-y-0.5 hover:shadow-md">
+              <div className="relative rounded-lg p-[2px] overflow-hidden group/card h-full transition-all hover:-translate-y-0.5 hover:shadow-md active:scale-[0.97] active:shadow-none">
                 {/* Gradient animé visible seulement au hover */}
                 <div
                   className="absolute inset-[-200%] opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 animate-border-beam pointer-events-none"

@@ -50,7 +50,7 @@ function RestTimerOverlay({ active, remaining, total, exerciseName, onAdd, onSub
           <button
             onClick={onSubtract}
             disabled={remaining <= 15}
-            className="rounded-xl border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted transition-colors disabled:opacity-40"
+            className="rounded-xl border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted active:bg-muted transition-colors disabled:opacity-40"
           >
             −15s
           </button>
@@ -93,7 +93,7 @@ function RestTimerOverlay({ active, remaining, total, exerciseName, onAdd, onSub
           {/* Bouton +15s */}
           <button
             onClick={onAdd}
-            className="rounded-xl border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted transition-colors"
+            className="rounded-xl border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted active:bg-muted transition-colors"
           >
             +15s
           </button>
@@ -101,7 +101,7 @@ function RestTimerOverlay({ active, remaining, total, exerciseName, onAdd, onSub
 
         <button
           onClick={onSkip}
-          className="mt-4 w-full rounded-xl py-2.5 text-sm font-semibold text-muted-foreground hover:bg-muted transition-colors border"
+          className="mt-4 w-full rounded-xl py-2.5 text-sm font-semibold text-muted-foreground hover:bg-muted active:bg-muted transition-colors border"
         >
           Passer
         </button>
@@ -144,7 +144,7 @@ function QuitDialog({ open, onCancel, onConfirm }: { open: boolean; onCancel: ()
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 rounded-xl border py-2.5 text-sm font-semibold hover:bg-muted transition-colors"
+            className="flex-1 rounded-xl border py-2.5 text-sm font-semibold hover:bg-muted active:bg-muted transition-colors"
           >
             Annuler
           </button>
