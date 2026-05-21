@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { startWorkout, completeSet, finishWorkout } from "../../actions"
 import type { Workout, WorkoutExercise, Exercise, MuscleGroup } from "@/generated/prisma/client"
+import type { HistoryEntry } from "./page"
 
 type ExerciseWithRelations = WorkoutExercise & {
   exercise: Exercise & { muscleGroup: MuscleGroup }
@@ -11,6 +12,68 @@ type ExerciseWithRelations = WorkoutExercise & {
 
 type WorkoutWithExercises = Workout & {
   exercises: ExerciseWithRelations[]
+}
+
+type WorkoutLiveProps = {
+  workout: WorkoutWithExercises
+  historyByExercise: Record<string, HistoryEntry[]>
+  prByExercise: Record<string, number>
+}
+
+// ─── Exercise History ──────────────────────────────────────────────────────────
+
+function ExerciseHistory({ history }: { history: HistoryEntry[] }) {
+  const [open, setOpen] = useState(false)
+
+  if (history.length === 0) return null
+
+  const maxWeight = Math.max(...history.map((e) => e.maxWeight))
+
+  return (
+    <div className="mt-1">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-full cursor-pointer bg-gradient-to-r from-primary/10 to-primary/5 border-l-[3px] border-primary rounded-r-lg px-3 py-2 flex items-center justify-between transition-colors active:from-primary/20"
+      >
+        <span className="text-xs font-semibold text-primary/80">📋 Voir mes sessions précédentes</span>
+        <span className="text-primary text-sm">{open ? "∧" : "∨"}</span>
+      </button>
+
+      {open && (
+        <div className="mt-2 flex flex-col gap-1.5">
+          {history.map((entry, i) => {
+            const isPR = entry.maxWeight === maxWeight && entry.maxWeight > 0
+            const delta = i < history.length - 1 ? entry.maxWeight - history[i + 1].maxWeight : null
+            return (
+              <div
+                key={i}
+                className="flex items-center justify-between bg-background rounded-lg px-3 py-2 text-xs border border-border"
+              >
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-semibold">
+                    {entry.maxWeight > 0 ? `${entry.maxWeight} kg` : "—"} × {entry.totalReps} reps × {entry.sets} séries
+                  </span>
+                  <span className="text-muted-foreground">{entry.date}</span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {isPR && (
+                    <span className="bg-amber-500/20 border border-amber-500/40 text-amber-500 rounded px-1.5 py-0.5 text-[9px] font-bold">
+                      🏆 PR
+                    </span>
+                  )}
+                  {delta !== null && delta !== 0 && (
+                    <span className={delta > 0 ? "text-green-500 font-semibold" : "text-red-500 font-semibold"}>
+                      {delta > 0 ? `+${delta}` : `${delta}`} kg
+                    </span>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
 }
 
 // ─── Rest Timer Overlay ────────────────────────────────────────────────────────
@@ -161,7 +224,7 @@ function QuitDialog({ open, onCancel, onConfirm }: { open: boolean; onCancel: ()
   )
 }
 
-export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
+export function WorkoutLive({ workout, historyByExercise, prByExercise }: WorkoutLiveProps) {
   const [started, setStarted] = useState(workout.status === "EN_COURS")
   const [starting, setStarting] = useState(false)
   const [finishing, setFinishing] = useState(false)
@@ -506,6 +569,8 @@ export function WorkoutLive({ workout }: { workout: WorkoutWithExercises }) {
                     />
                   ))}
                 </div>
+
+                <ExerciseHistory history={historyByExercise[we.exerciseId] ?? []} />
 
               </>
             )}
