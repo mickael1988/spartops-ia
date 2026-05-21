@@ -101,6 +101,11 @@ export async function completeSet(
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session) throw new Error("Non authentifié")
 
+  if (rpe !== null && (rpe < 1 || rpe > 3)) throw new Error("RPE invalide (doit être 1, 2 ou 3)")
+
+  const VALID_SET_TYPES = ["NORMAL", "WARMUP", "DROP_SET", "FAILURE"] as const
+  if (!VALID_SET_TYPES.includes(setType)) throw new Error("Type de série invalide")
+
   const we = await prisma.workoutExercise.findFirst({
     where: { id: workoutExerciseId, workout: { userId: session.user.id } },
     select: { completedSets: true, sets: true },
