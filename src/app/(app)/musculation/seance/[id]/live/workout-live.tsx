@@ -551,6 +551,24 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise }: Workou
             )}
 
             {/* Contenu interactif (exercice actif uniquement) */}
+            {/* Note exercice — visible pour tout exercice non terminé */}
+            {!isCompleted && (
+              <textarea
+                value={noteMap[we.id] ?? ""}
+                onChange={(e) => setNoteMap((prev) => ({ ...prev, [we.id]: e.target.value }))}
+                onBlur={async () => {
+                  try {
+                    await saveExerciseNote(we.id, noteMap[we.id] ?? "")
+                  } catch {
+                    // silent — note is preserved in local state even if server write fails
+                  }
+                }}
+                placeholder="Note sur cet exercice… (optionnel)"
+                rows={1}
+                className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm text-muted-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30"
+              />
+            )}
+
             {isActive && (
               <>
                 <p className="text-center text-sm font-medium text-muted-foreground">
@@ -673,18 +691,6 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise }: Workou
                     />
                   ))}
                 </div>
-
-                {/* Note exercice */}
-                <textarea
-                  value={noteMap[we.id] ?? ""}
-                  onChange={(e) => setNoteMap((prev) => ({ ...prev, [we.id]: e.target.value }))}
-                  onBlur={async () => {
-                    await saveExerciseNote(we.id, noteMap[we.id] ?? "")
-                  }}
-                  placeholder="Note sur cet exercice… (optionnel)"
-                  rows={1}
-                  className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm text-muted-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30"
-                />
 
                 {(weightMap[we.id] ?? 0) > 0 &&
                   (weightMap[we.id] ?? 0) > (prByExercise[we.exerciseId] ?? 0) && (
