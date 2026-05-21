@@ -11,10 +11,10 @@ type SetType = "NORMAL" | "WARMUP" | "DROP_SET" | "FAILURE"
 const SET_TYPE_ORDER: SetType[] = ["NORMAL", "WARMUP", "DROP_SET", "FAILURE"]
 
 const SET_TYPE_LABELS: Record<SetType, string> = {
-  NORMAL: "NOR",
-  WARMUP: "ECH",
-  DROP_SET: "DROP",
-  FAILURE: "FAIL",
+  NORMAL: "Normal",
+  WARMUP: "Échauff.",
+  DROP_SET: "Drop set",
+  FAILURE: "À l'échec",
 }
 
 const SET_TYPE_COLORS: Record<SetType, string> = {
@@ -641,7 +641,7 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise }: Workou
                               return { ...prev, [we.id]: SET_TYPE_ORDER[nextIdx] }
                             })
                           }
-                          className={`rounded-xl border px-2 py-2 text-[10px] font-bold transition-colors leading-tight ${SET_TYPE_COLORS[typeMap[we.id] ?? "NORMAL"]}`}
+                          className={`rounded-xl border px-2 py-2 text-[10px] font-bold transition-colors leading-tight text-center whitespace-normal w-14 ${SET_TYPE_COLORS[typeMap[we.id] ?? "NORMAL"]}`}
                         >
                           {SET_TYPE_LABELS[typeMap[we.id] ?? "NORMAL"]}
                         </button>
