@@ -57,7 +57,11 @@ export default async function HistoriquePage() {
             const duration = formatDuration(workout.startedAt, workout.completedAt)
             const volume = Math.round(
               workout.exercises.reduce(
-                (acc, we) => acc + we.setLogs.reduce((s, log) => s + (log.weight ?? 0) * log.reps, 0),
+                (acc, we) =>
+                  acc +
+                  we.setLogs
+                    .filter((log) => log.setType !== "WARMUP")
+                    .reduce((s, log) => s + (log.weight ?? 0) * log.reps, 0),
                 0
               )
             )
