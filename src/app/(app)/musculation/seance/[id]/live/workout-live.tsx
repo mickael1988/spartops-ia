@@ -378,6 +378,15 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise }: Workou
   async function handleFinish() {
     setFinishing(true)
     try {
+      // Flush all pending notes before finishing
+      await Promise.all(
+        workout.exercises.map((we) => {
+          const note = noteMap[we.id] ?? ""
+          const original = we.note ?? ""
+          if (note === original) return Promise.resolve()
+          return saveExerciseNote(we.id, note).catch(() => {})
+        })
+      )
       await finishWorkout(workout.id)
       router.push(`/musculation/seance/${workout.id}`)
     } catch {

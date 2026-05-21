@@ -59,13 +59,15 @@ export default async function WorkoutLivePage({
   for (const we of pastWorkoutExercises) {
     const existing = historyByExercise[we.exerciseId] ?? []
     if (existing.length >= 3) continue
-    const maxWeight = we.setLogs.reduce((max, log) => Math.max(max, log.weight ?? 0), 0)
-    const totalReps = we.setLogs.reduce((acc, log) => acc + log.reps, 0)
+    const workingLogs = we.setLogs.filter((log) => log.setType !== "WARMUP")
+    if (workingLogs.length === 0) continue
+    const maxWeight = workingLogs.reduce((max, log) => Math.max(max, log.weight ?? 0), 0)
+    const totalReps = workingLogs.reduce((acc, log) => acc + log.reps, 0)
     existing.push({
       date: we.workout.completedAt?.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) ?? "",
       maxWeight,
       totalReps,
-      sets: we.setLogs.length,
+      sets: workingLogs.length,
     })
     historyByExercise[we.exerciseId] = existing
   }
