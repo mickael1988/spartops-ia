@@ -51,7 +51,7 @@ export default async function WorkoutLivePage({
       workout: { select: { completedAt: true } },
     },
     orderBy: { workout: { completedAt: "desc" } },
-    take: exerciseIds.length * 3,
+    take: exerciseIds.length * 10,
   })
 
   // Grouper par exerciseId, garder les 3 plus récents
@@ -70,14 +70,16 @@ export default async function WorkoutLivePage({
     historyByExercise[we.exerciseId] = existing
   }
 
-  // PRs : meilleur estimatedMax par exercice
+  // PRs : meilleur poids réel soulevé (inputWeight) par exercice
   const oneRepMaxes = await prisma.oneRepMax.findMany({
     where: { userId: session.user.id, exerciseId: { in: exerciseIds } },
-    orderBy: { estimatedMax: "desc" },
+    orderBy: { inputWeight: "desc" },
     distinct: ["exerciseId"],
   })
   const prByExercise: Record<string, number> = Object.fromEntries(
-    oneRepMaxes.map((orm) => [orm.exerciseId, orm.estimatedMax])
+    oneRepMaxes
+      .filter((orm) => orm.inputWeight != null)
+      .map((orm) => [orm.exerciseId, orm.inputWeight!])
   )
 
   return (
