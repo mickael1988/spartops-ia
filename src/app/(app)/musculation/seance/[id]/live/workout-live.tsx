@@ -369,6 +369,18 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise }: Workou
     }
   }
 
+  // Derived stats variables for end-of-session display
+  const totalSets = Object.values(completedSetsMap).reduce((a, b) => a + b, 0)
+
+  const totalVolume = Math.round(
+    workout.exercises.reduce((acc, we) => {
+      const weight = weightMap[we.id] ?? 0
+      const reps = repsMap[we.id] ?? we.reps
+      const sets = completedSetsMap[we.id] ?? 0
+      return acc + weight * reps * sets
+    }, 0)
+  )
+
   if (!started) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
@@ -606,16 +618,35 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise }: Workou
         onSkip={stopRest}
       />
 
-      {/* Bouton terminer — visible quand tout est fait */}
+      {/* Bloc fin de séance — visible quand tout est fait */}
       {allDone && (
-        <button
-          onClick={handleFinish}
-          disabled={finishing}
-          className="w-full rounded-2xl py-5 text-xl font-bold text-white disabled:opacity-60"
-          style={{ background: "linear-gradient(135deg, #11998e, #38ef7d)" }}
-        >
-          {finishing ? "Enregistrement…" : "🏁 Terminer la séance"}
-        </button>
+        <div className="rounded-2xl border p-5 space-y-4 bg-background/80 backdrop-blur-sm">
+          <p className="text-center text-xl font-bold">🎉 Séance terminée !</p>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-xl border p-3 text-center space-y-1">
+              <p className="text-lg font-bold font-mono">{formatTime(elapsedSeconds)}</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Durée</p>
+            </div>
+            <div className="rounded-xl border p-3 text-center space-y-1">
+              <p className="text-lg font-bold">{totalSets}</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Séries</p>
+            </div>
+            <div className="rounded-xl border border-primary/30 bg-primary/10 p-3 text-center space-y-1">
+              <p className="text-lg font-bold text-primary">{totalVolume.toLocaleString("fr-FR")}</p>
+              <p className="text-[10px] text-primary/60 uppercase tracking-wide">kg soulevés</p>
+            </div>
+          </div>
+
+          <button
+            onClick={handleFinish}
+            disabled={finishing}
+            className="w-full rounded-2xl py-4 text-lg font-bold text-white disabled:opacity-60"
+            style={{ background: "linear-gradient(135deg, #11998e, #38ef7d)" }}
+          >
+            {finishing ? "Enregistrement…" : "🏁 Terminer la séance"}
+          </button>
+        </div>
       )}
     </div>
   )
