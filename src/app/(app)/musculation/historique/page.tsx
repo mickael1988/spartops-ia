@@ -20,7 +20,14 @@ export default async function HistoriquePage() {
 
   const workouts = await prisma.workout.findMany({
     where: { userId: session.user.id, status: "TERMINEE" },
-    include: { exercises: { include: { exercise: true } } },
+    include: {
+      exercises: {
+        include: {
+          exercise: true,
+          setLogs: true,
+        },
+      },
+    },
     orderBy: { completedAt: "desc" },
   })
 
@@ -48,6 +55,12 @@ export default async function HistoriquePage() {
               year: "numeric",
             })
             const duration = formatDuration(workout.startedAt, workout.completedAt)
+            const volume = Math.round(
+              workout.exercises.reduce(
+                (acc, we) => acc + we.setLogs.reduce((s, log) => s + (log.weight ?? 0) * log.reps, 0),
+                0
+              )
+            )
             return (
               <Card key={workout.id} className="bg-background/80 backdrop-blur-sm">
                 <CardContent className="flex items-center gap-4 py-4">
@@ -59,6 +72,11 @@ export default async function HistoriquePage() {
                       {workout.exercises.length} exercice{workout.exercises.length > 1 ? "s" : ""}
                       {duration ? ` · ${duration}` : ""}
                     </p>
+                    {volume > 0 && (
+                      <span className="inline-flex items-center gap-1 mt-1 bg-primary/10 text-primary border border-primary/20 rounded-md px-2 py-0.5 text-xs font-bold">
+                        ⚡ {volume.toLocaleString("fr-FR")} kg soulevés
+                      </span>
+                    )}
                   </div>
                   <Link
                     href={`/musculation/seance/${workout.id}`}
