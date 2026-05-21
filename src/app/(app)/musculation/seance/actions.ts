@@ -94,7 +94,9 @@ export async function startWorkout(workoutId: string): Promise<void> {
 export async function completeSet(
   workoutExerciseId: string,
   reps: number,
-  weight: number | null
+  weight: number | null,
+  setType: "NORMAL" | "WARMUP" | "DROP_SET" | "FAILURE" = "NORMAL",
+  rpe: number | null = null
 ): Promise<void> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session) throw new Error("Non authentifié")
@@ -117,6 +119,8 @@ export async function completeSet(
         setNumber: we.completedSets + 1,
         reps,
         weight,
+        setType,
+        rpe,
       },
     }),
   ])
@@ -267,5 +271,24 @@ export async function finishWorkout(workoutId: string): Promise<void> {
   await prisma.workout.updateMany({
     where: { id: workoutId, userId: session.user.id, status: "EN_COURS" },
     data: { status: "TERMINEE", completedAt: new Date() },
+  })
+}
+
+export async function saveExerciseNote(
+  workoutExerciseId: string,
+  note: string
+): Promise<void> {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session) throw new Error("Non authentifié")
+
+  const we = await prisma.workoutExercise.findFirst({
+    where: { id: workoutExerciseId, workout: { userId: session.user.id } },
+    select: { id: true },
+  })
+  if (!we) throw new Error("Exercice introuvable")
+
+  await prisma.workoutExercise.update({
+    where: { id: workoutExerciseId },
+    data: { note: note.trim() || null },
   })
 }
