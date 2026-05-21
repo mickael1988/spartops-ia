@@ -2,9 +2,27 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { startWorkout, completeSet, finishWorkout } from "../../actions"
+import { startWorkout, completeSet, finishWorkout, saveExerciseNote } from "../../actions"
 import type { Workout, WorkoutExercise, Exercise, MuscleGroup } from "@/generated/prisma/client"
 import type { HistoryEntry } from "./page"
+
+type SetType = "NORMAL" | "WARMUP" | "DROP_SET" | "FAILURE"
+
+const SET_TYPE_ORDER: SetType[] = ["NORMAL", "WARMUP", "DROP_SET", "FAILURE"]
+
+const SET_TYPE_LABELS: Record<SetType, string> = {
+  NORMAL: "NOR",
+  WARMUP: "ECH",
+  DROP_SET: "DROP",
+  FAILURE: "FAIL",
+}
+
+const SET_TYPE_COLORS: Record<SetType, string> = {
+  NORMAL: "bg-primary/20 border-primary/40 text-primary",
+  WARMUP: "bg-amber-500/20 border-amber-500/40 text-amber-500",
+  DROP_SET: "bg-purple-500/20 border-purple-500/40 text-purple-400",
+  FAILURE: "bg-red-500/20 border-red-500/40 text-red-400",
+}
 
 type ExerciseWithRelations = WorkoutExercise & {
   exercise: Exercise & { muscleGroup: MuscleGroup }
@@ -239,6 +257,21 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise }: Workou
   const [repsMap, setRepsMap] = useState<Record<string, number>>(
     Object.fromEntries(workout.exercises.map((we) => [we.id, we.reps]))
   )
+  const [typeMap, setTypeMap] = useState<Record<string, SetType>>(
+    Object.fromEntries(workout.exercises.map((we) => [we.id, "NORMAL" as SetType]))
+  )
+  const [warmupSetsMap, setWarmupSetsMap] = useState<Record<string, number>>(
+    Object.fromEntries(workout.exercises.map((we) => [we.id, 0]))
+  )
+  const [noteMap, setNoteMap] = useState<Record<string, string>>(
+    Object.fromEntries(workout.exercises.map((we) => [we.id, we.note ?? ""]))
+  )
+  const [pendingRpe, setPendingRpe] = useState<{
+    we: ExerciseWithRelations
+    reps: number
+    weight: number | null
+    setType: SetType
+  } | null>(null)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [restActive, setRestActive] = useState(false)
@@ -353,16 +386,32 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise }: Workou
   }
 
   async function handleCompleteSet(we: ExerciseWithRelations) {
-    if (validatingId) return
+    if (validatingId || pendingRpe) return
     const done = completedSetsMap[we.id] ?? 0
     const totalSets = setsMap[we.id] ?? we.sets
     if (done >= totalSets) return
-    setValidatingId(we.id)
+
     const reps = repsMap[we.id] ?? we.reps
     const weight = weightMap[we.id] ?? null
+    const setType = typeMap[we.id] ?? "NORMAL"
+
+    setPendingRpe({ we, reps, weight, setType })
+  }
+
+  async function handleConfirmSet(rpe: number | null) {
+    if (!pendingRpe || validatingId) return
+    const { we, reps, weight, setType } = pendingRpe
+    const done = completedSetsMap[we.id] ?? 0
+
+    setPendingRpe(null)
+    setValidatingId(we.id)
     try {
-      await completeSet(we.id, reps, weight)
+      await completeSet(we.id, reps, weight, setType, rpe)
       setCompletedSetsMap((prev) => ({ ...prev, [we.id]: done + 1 }))
+      if (setType === "WARMUP") {
+        setWarmupSetsMap((prev) => ({ ...prev, [we.id]: (prev[we.id] ?? 0) + 1 }))
+      }
+      setTypeMap((prev) => ({ ...prev, [we.id]: "NORMAL" }))
       startRest(we.restSeconds, we.id)
     } finally {
       setValidatingId(null)
@@ -376,8 +425,9 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise }: Workou
     workout.exercises.reduce((acc, we) => {
       const weight = weightMap[we.id] ?? 0
       const reps = repsMap[we.id] ?? we.reps
-      const sets = completedSetsMap[we.id] ?? 0
-      return acc + weight * reps * sets
+      const total = completedSetsMap[we.id] ?? 0
+      const warmup = warmupSetsMap[we.id] ?? 0
+      return acc + weight * reps * (total - warmup)
     }, 0)
   )
 
@@ -510,7 +560,7 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise }: Workou
                 {done < (setsMap[we.id] ?? we.sets) ? (
                   <>
                     {/* Inputs séries + reps + poids pour la série en cours */}
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end">
                       <div className="space-y-1">
                         <label className="text-xs text-muted-foreground">Séries</label>
                         <input
@@ -554,15 +604,59 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise }: Workou
                           className="w-full rounded-xl border bg-background px-3 py-2 text-center text-lg font-bold"
                         />
                       </div>
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground opacity-0">Type</label>
+                        <button
+                          onClick={() =>
+                            setTypeMap((prev) => {
+                              const current = prev[we.id] ?? "NORMAL"
+                              const nextIdx = (SET_TYPE_ORDER.indexOf(current) + 1) % SET_TYPE_ORDER.length
+                              return { ...prev, [we.id]: SET_TYPE_ORDER[nextIdx] }
+                            })
+                          }
+                          className={`rounded-xl border px-2 py-2 text-[10px] font-bold transition-colors leading-tight ${SET_TYPE_COLORS[typeMap[we.id] ?? "NORMAL"]}`}
+                        >
+                          {SET_TYPE_LABELS[typeMap[we.id] ?? "NORMAL"]}
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => handleCompleteSet(we)}
-                      disabled={validatingId === we.id}
-                      className="w-full rounded-2xl py-4 text-lg font-bold text-white disabled:opacity-60"
-                      style={{ background: "linear-gradient(to right, #3F5EFB, #F50535)" }}
-                    >
-                      {validatingId === we.id ? "Enregistrement…" : "✓ Valider la série"}
-                    </button>
+                    {pendingRpe?.we.id === we.id ? (
+                      <div className="flex items-center justify-between bg-muted/50 border border-border rounded-xl px-4 py-2.5">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          Ressenti série {(completedSetsMap[we.id] ?? 0) + 1} ?
+                        </span>
+                        <div className="flex items-center gap-3">
+                          {([{ emoji: "😌", value: 1 }, { emoji: "😤", value: 2 }, { emoji: "🔥", value: 3 }] as const).map(
+                            ({ emoji, value }) => (
+                              <button
+                                key={value}
+                                onClick={() => handleConfirmSet(value)}
+                                disabled={validatingId === we.id}
+                                className="text-xl active:scale-125 transition-transform disabled:opacity-40"
+                              >
+                                {emoji}
+                              </button>
+                            )
+                          )}
+                          <button
+                            onClick={() => handleConfirmSet(null)}
+                            disabled={validatingId === we.id}
+                            className="text-xs text-muted-foreground hover:text-foreground transition-colors ml-1 disabled:opacity-40"
+                          >
+                            Passer
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleCompleteSet(we)}
+                        disabled={!!validatingId || !!pendingRpe}
+                        className="w-full rounded-2xl py-4 text-lg font-bold text-white disabled:opacity-60"
+                        style={{ background: "linear-gradient(to right, #3F5EFB, #F50535)" }}
+                      >
+                        {validatingId === we.id ? "Enregistrement…" : "✓ Valider la série"}
+                      </button>
+                    )}
                   </>
                 ) : (
                   <div className="w-full rounded-2xl py-3 text-center font-bold text-green-600 bg-green-50 dark:bg-green-900/20">
@@ -579,6 +673,18 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise }: Workou
                     />
                   ))}
                 </div>
+
+                {/* Note exercice */}
+                <textarea
+                  value={noteMap[we.id] ?? ""}
+                  onChange={(e) => setNoteMap((prev) => ({ ...prev, [we.id]: e.target.value }))}
+                  onBlur={async () => {
+                    await saveExerciseNote(we.id, noteMap[we.id] ?? "")
+                  }}
+                  placeholder="Note sur cet exercice… (optionnel)"
+                  rows={1}
+                  className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm text-muted-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30"
+                />
 
                 {(weightMap[we.id] ?? 0) > 0 &&
                   (weightMap[we.id] ?? 0) > (prByExercise[we.exerciseId] ?? 0) && (
