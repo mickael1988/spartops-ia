@@ -34,6 +34,19 @@ export default async function WorkoutLivePage({
   if (workout.status === "TERMINEE") redirect(`/musculation/seance/${id}`)
   if (workout.isTemplate) await startFromTemplate(id)
 
+  // Comptage des setLogs WARMUP existants par workoutExercise (pour reprise de séance)
+  const warmupCounts = await prisma.setLog.groupBy({
+    by: ["workoutExerciseId"],
+    where: {
+      workoutExercise: { workoutId: workout.id },
+      setType: "WARMUP",
+    },
+    _count: { id: true },
+  })
+  const warmupCountByExercise: Record<string, number> = Object.fromEntries(
+    warmupCounts.map((r) => [r.workoutExerciseId, r._count.id])
+  )
+
   const exerciseIds = workout.exercises.map((e) => e.exerciseId)
 
   // Historique : 3 derniers WorkoutExercise TERMINEE par exercice
@@ -89,6 +102,7 @@ export default async function WorkoutLivePage({
       workout={workout}
       historyByExercise={historyByExercise}
       prByExercise={prByExercise}
+      warmupCountByExercise={warmupCountByExercise}
     />
   )
 }

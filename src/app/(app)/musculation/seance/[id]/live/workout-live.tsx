@@ -36,6 +36,7 @@ type WorkoutLiveProps = {
   workout: WorkoutWithExercises
   historyByExercise: Record<string, HistoryEntry[]>
   prByExercise: Record<string, number>
+  warmupCountByExercise: Record<string, number>
 }
 
 // ─── Exercise History ──────────────────────────────────────────────────────────
@@ -240,7 +241,7 @@ function QuitDialog({ open, onCancel, onConfirm }: { open: boolean; onCancel: ()
   )
 }
 
-export function WorkoutLive({ workout, historyByExercise, prByExercise }: WorkoutLiveProps) {
+export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCountByExercise }: WorkoutLiveProps) {
   const [started, setStarted] = useState(workout.status === "EN_COURS")
   const [starting, setStarting] = useState(false)
   const [finishing, setFinishing] = useState(false)
@@ -261,7 +262,7 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise }: Workou
     Object.fromEntries(workout.exercises.map((we) => [we.id, "NORMAL" as SetType]))
   )
   const [warmupSetsMap, setWarmupSetsMap] = useState<Record<string, number>>(
-    Object.fromEntries(workout.exercises.map((we) => [we.id, 0]))
+    Object.fromEntries(workout.exercises.map((we) => [we.id, warmupCountByExercise[we.id] ?? 0]))
   )
   const [noteMap, setNoteMap] = useState<Record<string, string>>(
     Object.fromEntries(workout.exercises.map((we) => [we.id, we.note ?? ""]))

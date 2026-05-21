@@ -286,6 +286,8 @@ export async function saveExerciseNote(
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session) throw new Error("Non authentifié")
 
+  if (note.length > 1000) throw new Error("Note trop longue (max 1000 caractères)")
+
   const we = await prisma.workoutExercise.findFirst({
     where: { id: workoutExerciseId, workout: { userId: session.user.id } },
     select: { id: true },
