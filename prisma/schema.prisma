@@ -107,6 +107,13 @@ enum WorkoutStatus {
   TERMINEE
 }
 
+enum SetType {
+  NORMAL
+  WARMUP
+  DROP_SET
+  FAILURE
+}
+
 model Workout {
   id          String        @id @default(cuid())
   userId      String
@@ -136,6 +143,7 @@ model WorkoutExercise {
   weight        Float?
   restSeconds   Int      @default(60)
   completedSets Int      @default(0)
+  note          String?
 
   setLogs SetLog[]
 }
@@ -148,6 +156,8 @@ model SetLog {
   reps              Int
   weight            Float?
   completedAt       DateTime        @default(now())
+  setType           SetType         @default(NORMAL)
+  rpe               Int?
 }
 
 model OneRepMax {
