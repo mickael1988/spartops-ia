@@ -22,12 +22,10 @@ type WorkoutLiveProps = {
 
 // ─── Exercise History ──────────────────────────────────────────────────────────
 
-function ExerciseHistory({ history }: { history: HistoryEntry[] }) {
+function ExerciseHistory({ history, currentPR }: { history: HistoryEntry[]; currentPR: number }) {
   const [open, setOpen] = useState(false)
 
   if (history.length === 0) return null
-
-  const maxWeight = Math.max(...history.map((e) => e.maxWeight))
 
   return (
     <div className="mt-1">
@@ -42,11 +40,11 @@ function ExerciseHistory({ history }: { history: HistoryEntry[] }) {
       {open && (
         <div className="mt-2 flex flex-col gap-1.5">
           {history.map((entry, i) => {
-            const isPR = entry.maxWeight === maxWeight && entry.maxWeight > 0
+            const isPR = currentPR > 0 && entry.maxWeight >= currentPR
             const delta = i < history.length - 1 ? entry.maxWeight - history[i + 1].maxWeight : null
             return (
               <div
-                key={i}
+                key={`${entry.date}-${entry.maxWeight}`}
                 className="flex items-center justify-between bg-background rounded-lg px-3 py-2 text-xs border border-border"
               >
                 <div className="flex flex-col gap-0.5">
@@ -570,7 +568,7 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise }: Workou
                   ))}
                 </div>
 
-                <ExerciseHistory history={historyByExercise[we.exerciseId] ?? []} />
+                <ExerciseHistory history={historyByExercise[we.exerciseId] ?? []} currentPR={prByExercise[we.exerciseId] ?? 0} />
 
               </>
             )}
