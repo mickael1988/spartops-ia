@@ -568,6 +568,19 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise }: Workou
                   ))}
                 </div>
 
+                {(weightMap[we.id] ?? 0) > 0 &&
+                  (weightMap[we.id] ?? 0) > (prByExercise[we.exerciseId] ?? 0) && (
+                  <div className="bg-gradient-to-r from-amber-500/20 to-amber-500/5 border-l-[3px] border-amber-500 rounded-r-lg px-3 py-2 flex items-center gap-3">
+                    <span className="text-xl shrink-0">🏆</span>
+                    <div>
+                      <p className="text-xs font-bold text-amber-500">Nouveau record personnel !</p>
+                      <p className="text-[10px] text-amber-700 dark:text-amber-400">
+                        {weightMap[we.id]} kg dépasse votre PR de {prByExercise[we.exerciseId]} kg
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <ExerciseHistory history={historyByExercise[we.exerciseId] ?? []} currentPR={prByExercise[we.exerciseId] ?? 0} />
 
               </>
