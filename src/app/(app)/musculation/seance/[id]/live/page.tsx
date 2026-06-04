@@ -125,6 +125,8 @@ export default async function WorkoutLivePage({
       }
     } else if (lastRpe === 2) {
       direction = "hold"
+      suggestedWeight = lastWeight
+      suggestedReps = lastReps
     } else if (lastRpe === 3) {
       direction = "down"
       if (lastReps > repsMin) {
