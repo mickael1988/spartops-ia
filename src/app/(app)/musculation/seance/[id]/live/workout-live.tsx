@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { startWorkout, completeSet, finishWorkout, saveExerciseNote } from "../../actions"
 import type { Workout, WorkoutExercise, Exercise, MuscleGroup } from "@/generated/prisma/client"
-import type { HistoryEntry } from "./page"
+import type { HistoryEntry, Suggestion } from "./page"
 
 type SetType = "NORMAL" | "WARMUP" | "DROP_SET" | "FAILURE"
 
@@ -37,6 +37,44 @@ type WorkoutLiveProps = {
   historyByExercise: Record<string, HistoryEntry[]>
   prByExercise: Record<string, number>
   warmupCountByExercise: Record<string, number>
+  suggestionByExercise: Record<string, Suggestion>
+}
+
+// ─── Suggestion Banner ────────────────────────────────────────────────────────
+
+function SuggestionBanner({ suggestion }: { suggestion: Suggestion | undefined }) {
+  if (!suggestion) return null
+
+  const rpeEmoji = suggestion.lastRpe === 1 ? " 😌" : suggestion.lastRpe === 2 ? " 😤" : suggestion.lastRpe === 3 ? " 🔥" : ""
+
+  const config = {
+    up:   { border: "border-emerald-500/30", bg: "bg-emerald-500/10", text: "text-emerald-500",        icon: "↑" },
+    hold: { border: "border-blue-500/30",    bg: "bg-blue-500/10",    text: "text-[#3F5EFB]",          icon: "=" },
+    down: { border: "border-amber-500/30",   bg: "bg-amber-500/10",   text: "text-amber-500",          icon: "↓" },
+    none: { border: "border-border",         bg: "bg-muted/30",       text: "text-muted-foreground",   icon: "—" },
+  }[suggestion.direction]
+
+  return (
+    <div className={`rounded-xl border ${config.border} ${config.bg} px-3 py-2 flex items-center justify-between gap-2`}>
+      <p className="text-[10px] text-muted-foreground leading-snug">
+        Dernière fois :{" "}
+        <strong className="text-foreground">
+          {suggestion.lastWeight} kg × {suggestion.lastReps} reps
+        </strong>
+        {rpeEmoji}
+        {suggestion.direction !== "none" && (
+          <>
+            <br />Objectif aujourd&apos;hui
+          </>
+        )}
+      </p>
+      {suggestion.direction !== "none" && (
+        <span className={`text-sm font-bold ${config.text} whitespace-nowrap shrink-0`}>
+          {config.icon} {suggestion.suggestedWeight} kg × {suggestion.suggestedReps}
+        </span>
+      )}
+    </div>
+  )
 }
 
 // ─── Exercise History ──────────────────────────────────────────────────────────
@@ -241,7 +279,7 @@ function QuitDialog({ open, onCancel, onConfirm }: { open: boolean; onCancel: ()
   )
 }
 
-export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCountByExercise }: WorkoutLiveProps) {
+export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCountByExercise, suggestionByExercise }: WorkoutLiveProps) {
   const [started, setStarted] = useState(workout.status === "EN_COURS")
   const [starting, setStarting] = useState(false)
   const [finishing, setFinishing] = useState(false)
@@ -581,6 +619,8 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
 
             {isActive && (
               <>
+                <SuggestionBanner suggestion={suggestionByExercise[we.id]} />
+
                 <p className="text-center text-sm font-medium text-muted-foreground">
                   Série {Math.min(done + 1, setsMap[we.id] ?? we.sets)} / {setsMap[we.id] ?? we.sets}
                 </p>
