@@ -11,6 +11,15 @@ export type HistoryEntry = {
   sets: number
 }
 
+export type Suggestion = {
+  lastWeight: number
+  lastReps: number
+  lastRpe: number | null
+  suggestedWeight: number
+  suggestedReps: number
+  direction: "up" | "hold" | "down" | "none"
+}
+
 export default async function WorkoutLivePage({
   params,
 }: {
@@ -85,6 +94,50 @@ export default async function WorkoutLivePage({
     historyByExercise[we.exerciseId] = existing
   }
 
+  const suggestionByExercise: Record<string, Suggestion> = {}
+
+  for (const we of workout.exercises) {
+    const lastWe = pastWorkoutExercises.find((p) => p.exerciseId === we.exerciseId)
+    if (!lastWe) continue
+
+    const workingLogs = lastWe.setLogs.filter((l) => l.setType !== "WARMUP")
+    if (workingLogs.length === 0) continue
+
+    const lastLog = workingLogs[workingLogs.length - 1]
+    const lastReps = lastLog.reps
+    const lastWeight = lastLog.weight ?? 0
+    const lastRpe = lastLog.rpe ?? null
+
+    const repsMin = we.reps - 2
+    const repsMax = we.reps + 2
+
+    let suggestedReps = lastReps
+    let suggestedWeight = lastWeight
+    let direction: Suggestion["direction"] = "none"
+
+    if (lastRpe === 1) {
+      direction = "up"
+      if (lastReps < repsMax) {
+        suggestedReps = lastReps + 1
+      } else {
+        suggestedWeight = lastWeight + 2.5
+        suggestedReps = repsMin
+      }
+    } else if (lastRpe === 2) {
+      direction = "hold"
+    } else if (lastRpe === 3) {
+      direction = "down"
+      if (lastReps > repsMin) {
+        suggestedReps = lastReps - 1
+      } else {
+        suggestedWeight = Math.max(0, lastWeight - 2.5)
+        suggestedReps = repsMax
+      }
+    }
+
+    suggestionByExercise[we.id] = { lastWeight, lastReps, lastRpe, suggestedWeight, suggestedReps, direction }
+  }
+
   // PRs : meilleur poids réel soulevé (inputWeight) par exercice
   const oneRepMaxes = await prisma.oneRepMax.findMany({
     where: { userId: session.user.id, exerciseId: { in: exerciseIds } },
@@ -103,6 +156,7 @@ export default async function WorkoutLivePage({
       historyByExercise={historyByExercise}
       prByExercise={prByExercise}
       warmupCountByExercise={warmupCountByExercise}
+      suggestionByExercise={suggestionByExercise}
     />
   )
 }
