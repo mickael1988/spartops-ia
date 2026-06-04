@@ -108,7 +108,7 @@ export default async function WorkoutLivePage({
     const lastWeight = lastLog.weight ?? 0
     const lastRpe = lastLog.rpe ?? null
 
-    const repsMin = we.reps - 2
+    const repsMin = Math.max(1, we.reps - 2)
     const repsMax = we.reps + 2
 
     let suggestedReps = lastReps
