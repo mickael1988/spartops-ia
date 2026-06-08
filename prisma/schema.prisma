@@ -17,6 +17,7 @@ model User {
   email         String    @unique
   emailVerified Boolean
   image         String?
+  age           Int?
   createdAt     DateTime
   updatedAt     DateTime
 
@@ -24,6 +25,7 @@ model User {
   accounts      Account[]
   workouts      Workout[]
   cardioSessions UserCardioSession[]
+  oneRepMaxes   OneRepMax[]
 }
 
 model Session {
@@ -83,16 +85,20 @@ enum Difficulty {
 }
 
 model Exercise {
-  id            String      @id @default(cuid())
-  name          String
-  description   String
-  image         String?
-  muscleGroupId String
-  muscleGroup   MuscleGroup @relation(fields: [muscleGroupId], references: [id])
-  difficulty    Difficulty
-  equipment     String?
+  id                  String      @id @default(cuid())
+  name                String
+  description         String
+  image               String?
+  muscleGroupId       String
+  muscleGroup         MuscleGroup @relation(fields: [muscleGroupId], references: [id])
+  difficulty          Difficulty
+  equipment           String?
+  defaultReps         Int?
+  defaultRestSeconds  Int?
+  isFundamental       Boolean  @default(false)
 
   workoutExercises WorkoutExercise[]
+  oneRepMaxes      OneRepMax[]
 }
 
 enum WorkoutStatus {
@@ -101,16 +107,26 @@ enum WorkoutStatus {
   TERMINEE
 }
 
+enum SetType {
+  NORMAL
+  WARMUP
+  DROP_SET
+  FAILURE
+}
+
 model Workout {
   id          String        @id @default(cuid())
   userId      String
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   name        String
+  isTemplate  Boolean       @default(false)
   status      WorkoutStatus @default(PLANIFIEE)
   scheduledAt DateTime?
   startedAt   DateTime?
   completedAt DateTime?
   createdAt   DateTime      @default(now())
+  rating      Int?
+  comment     String?
 
   exercises WorkoutExercise[]
 }
@@ -127,6 +143,34 @@ model WorkoutExercise {
   weight        Float?
   restSeconds   Int      @default(60)
   completedSets Int      @default(0)
+  note          String?
+
+  setLogs SetLog[]
+}
+
+model SetLog {
+  id                String          @id @default(cuid())
+  workoutExerciseId String
+  workoutExercise   WorkoutExercise @relation(fields: [workoutExerciseId], references: [id], onDelete: Cascade)
+  setNumber         Int
+  reps              Int
+  weight            Float?
+  completedAt       DateTime        @default(now())
+  setType           SetType         @default(NORMAL)
+  rpe               Int?
+}
+
+model OneRepMax {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exerciseId   String
+  exercise     Exercise @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  estimatedMax Float
+  recordedAt   DateTime @default(now())
+  inputWeight  Float?
+  inputReps    Int?
+  isManual     Boolean  @default(false)
 }
 
 // ==========================================

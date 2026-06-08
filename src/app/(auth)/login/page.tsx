@@ -28,10 +28,7 @@ export default function LoginPage() {
     setError("")
     setLoading(true)
 
-    const result = await signIn.email({
-      email,
-      password,
-    })
+    const result = await signIn.email({ email, password })
 
     if (result.error) {
       setError("Email ou mot de passe incorrect.")
@@ -81,12 +78,17 @@ export default function LoginPage() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-3">
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button
+            type="submit"
+            className="w-full border-0 text-white"
+            style={{ background: "linear-gradient(to right, #3F5EFB, #F50535)" }}
+            disabled={loading}
+          >
             {loading ? "Connexion..." : "Se connecter"}
           </Button>
           <p className="text-sm text-muted-foreground text-center">
             Pas encore de compte ?{" "}
-            <Link href="/register" className="text-primary hover:underline">
+            <Link href="/register" className="font-medium hover:underline" style={{ color: "#3F5EFB" }}>
               S&apos;inscrire
             </Link>
           </p>
