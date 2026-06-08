@@ -69,7 +69,7 @@ export default async function WorkoutLivePage({
       },
     },
     include: {
-      setLogs: true,
+      setLogs: { orderBy: { setNumber: "asc" } },
       workout: { select: { completedAt: true } },
     },
     orderBy: { workout: { completedAt: "desc" } },

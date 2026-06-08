@@ -49,13 +49,13 @@ function SuggestionBanner({ suggestion }: { suggestion: Suggestion | undefined }
 
   const config = {
     up:   { border: "border-emerald-500/30", bg: "bg-emerald-500/10", text: "text-emerald-500",        icon: "↑" },
-    hold: { border: "border-blue-500/30",    bg: "bg-blue-500/10",    text: "text-[#3F5EFB]",          icon: "=" },
+    hold: { border: "border-[#3F5EFB]/30",    bg: "bg-[#3F5EFB]/10",    text: "text-[#3F5EFB]",          icon: "=" },
     down: { border: "border-amber-500/30",   bg: "bg-amber-500/10",   text: "text-amber-500",          icon: "↓" },
     none: { border: "border-border",         bg: "bg-muted/30",       text: "text-muted-foreground",   icon: "—" },
   }[suggestion.direction]
 
   return (
-    <div className={`rounded-xl border ${config.border} ${config.bg} px-3 py-2 flex items-center justify-between gap-2`}>
+    <div className={`rounded-xl border ${config.border} ${config.bg} px-3 py-2 mb-2 flex items-center justify-between gap-2`}>
       <p className="text-[10px] text-muted-foreground leading-snug">
         Dernière fois :{" "}
         <strong className="text-foreground">
@@ -599,6 +599,10 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
             )}
 
             {/* Contenu interactif (exercice actif uniquement) */}
+            {isActive && (
+              <SuggestionBanner suggestion={suggestionByExercise[we.id]} />
+            )}
+
             {/* Note exercice — visible pour tout exercice non terminé */}
             {!isCompleted && (
               <textarea
@@ -619,8 +623,6 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
 
             {isActive && (
               <>
-                <SuggestionBanner suggestion={suggestionByExercise[we.id]} />
-
                 <p className="text-center text-sm font-medium text-muted-foreground">
                   Série {Math.min(done + 1, setsMap[we.id] ?? we.sets)} / {setsMap[we.id] ?? we.sets}
                 </p>
