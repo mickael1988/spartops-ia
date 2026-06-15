@@ -46,3 +46,6 @@ next-env.d.ts
 /src/generated/
 
 .superpowers/
+
+# implementation plans (ephemeral, specs in docs/superpowers/specs/ are committed)
+docs/superpowers/plans/
