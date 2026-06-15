@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useCart } from "../cart-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -65,6 +66,12 @@ export function ExerciseCard({ exercise }: Props) {
         >
           {inCart ? "✅ Dans la séance — Retirer" : "+ Ajouter à la séance"}
         </button>
+        <Link
+          href={`/musculation/progression/exercices?exercice=${exercise.id}`}
+          className="mt-1 block text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Ma progression →
+        </Link>
       </CardContent>
     </Card>
   )

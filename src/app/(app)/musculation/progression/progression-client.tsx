@@ -280,6 +280,13 @@ export function ProgressionClient({ exercises, lastEntryDate, hasScheduled }: Pr
         ))}
       </div>
 
+      {/* Lien vers progression de tous les exercices */}
+      <div className="flex justify-center">
+        <Link href="/musculation/progression/exercices" className="text-sm font-medium text-orange-500 hover:underline">
+          Voir tous mes exercices →
+        </Link>
+      </div>
+
       {/* Terminer */}
       <div className="flex justify-center pt-2">
         <Link
