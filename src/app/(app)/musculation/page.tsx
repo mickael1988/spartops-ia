@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { ArrowRight, PlusCircle, Dumbbell, TrendingUp, PlayCircle } from "lucide-react"
+import { ArrowRight, PlusCircle, Dumbbell, TrendingUp, PlayCircle, BarChart2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { prisma } from "@/lib/prisma"
 import { getSession } from "@/lib/session"
@@ -146,6 +146,32 @@ export default async function MusculationPage() {
               <CardContent>
                 <span className="flex items-center gap-1 text-sm font-semibold" style={{ color: "#7C3AED" }}>
                   Progression <ArrowRight className="h-4 w-4" />
+                </span>
+              </CardContent>
+            </Card>
+          </div>
+        </Link>
+
+        {/* Mes statistiques */}
+        <Link href="/musculation/stats" className="w-full sm:max-w-xs">
+          <div className="relative rounded-lg p-[2px] overflow-hidden group/stats transition-all hover:-translate-y-1 hover:shadow-lg active:scale-[0.97] active:shadow-none h-full">
+            <div className="absolute inset-[-200%] opacity-0 group-hover/stats:opacity-100 transition-opacity duration-300 animate-border-beam pointer-events-none" style={{ background: BEAM }} />
+            <div className="absolute inset-0 rounded-lg border border-border group-hover/stats:border-transparent transition-colors pointer-events-none" />
+            <Card className="relative z-10 bg-card border-0 h-full">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-fit rounded-xl p-2.5 shrink-0" style={{ background: "linear-gradient(135deg, #0ea5e9, #6366f1)" }}>
+                    <BarChart2 className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Mes statistiques</CardTitle>
+                    <p className="text-xs text-muted-foreground">Streak, volume, records</p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <span className="flex items-center gap-1 text-sm font-semibold text-sky-500">
+                  Voir <ArrowRight className="h-4 w-4" />
                 </span>
               </CardContent>
             </Card>
