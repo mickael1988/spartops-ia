@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { startWorkout, completeSet, finishWorkout, rateAndFinishWorkout, saveExerciseNote } from "../../actions"
@@ -763,15 +764,19 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
 
                 {(weightMap[we.id] ?? 0) > 0 &&
                   (weightMap[we.id] ?? 0) > (prByExercise[we.exerciseId] ?? 0) && (
-                  <div className="bg-gradient-to-r from-amber-500/20 to-amber-500/5 border-l-[3px] border-amber-500 rounded-r-lg px-3 py-2 flex items-center gap-3">
+                  <Link
+                    href="/musculation/records"
+                    className="bg-gradient-to-r from-amber-500/20 to-amber-500/5 border-l-[3px] border-amber-500 rounded-r-lg px-3 py-2 flex items-center gap-3 active:opacity-70 transition-opacity"
+                  >
                     <span className="text-xl shrink-0">🏆</span>
-                    <div>
+                    <div className="flex-1">
                       <p className="text-xs font-bold text-amber-500">Nouveau record personnel !</p>
                       <p className="text-[10px] text-amber-700 dark:text-amber-400">
-                        {weightMap[we.id]} kg dépasse votre PR de {prByExercise[we.exerciseId]} kg
+                        {weightMap[we.id]} kg dépasse ton PR de {prByExercise[we.exerciseId]} kg
                       </p>
                     </div>
-                  </div>
+                    <span className="text-[10px] text-amber-600 shrink-0">Voir →</span>
+                  </Link>
                 )}
 
                 <ExerciseHistory history={historyByExercise[we.exerciseId] ?? []} currentPR={prByExercise[we.exerciseId] ?? 0} />

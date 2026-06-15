@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { ArrowRight, BarChart2 } from "lucide-react"
+import { ArrowRight, BarChart2, Trophy } from "lucide-react"
 import { getSession } from "@/lib/session"
 import { prisma } from "@/lib/prisma"
 import { ProfilForm } from "./profil-form"
@@ -150,22 +150,40 @@ export default async function ProfilPage() {
 
       <Profil1RMChart exercises={exerciseRecords} />
 
-      {/* Lien vers les stats complètes */}
-      <Link
-        href="/musculation/stats"
-        className="flex items-center justify-between gap-3 rounded-2xl border px-5 py-4 hover:bg-muted/50 transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-fit rounded-xl p-2 shrink-0" style={{ background: "linear-gradient(135deg, #0ea5e9, #6366f1)" }}>
-            <BarChart2 className="h-5 w-5 text-white" />
+      {/* Liens stats & records */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Link
+          href="/musculation/stats"
+          className="flex items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 hover:bg-muted/50 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-fit rounded-xl p-2 shrink-0" style={{ background: "linear-gradient(135deg, #0ea5e9, #6366f1)" }}>
+              <BarChart2 className="h-4 w-4 text-white" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">Statistiques</p>
+              <p className="text-xs text-muted-foreground">Streak, volume, favori</p>
+            </div>
           </div>
-          <div>
-            <p className="font-semibold text-sm">Statistiques détaillées</p>
-            <p className="text-xs text-muted-foreground">Streak, volume hebdo, exercice favori</p>
+          <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+        </Link>
+
+        <Link
+          href="/musculation/records"
+          className="flex items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 hover:bg-muted/50 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-fit rounded-xl p-2 shrink-0" style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)" }}>
+              <Trophy className="h-4 w-4 text-white" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">Records personnels</p>
+              <p className="text-xs text-muted-foreground">Meilleur poids par exercice</p>
+            </div>
           </div>
-        </div>
-        <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
-      </Link>
+          <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+        </Link>
+      </div>
 
       <ProfilActivityChart
         data={chartData}
