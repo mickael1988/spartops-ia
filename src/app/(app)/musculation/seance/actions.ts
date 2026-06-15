@@ -279,6 +279,30 @@ export async function finishWorkout(workoutId: string): Promise<void> {
   })
 }
 
+export async function rateAndFinishWorkout(
+  workoutId: string,
+  rating: number | null,
+  comment: string
+): Promise<void> {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session) throw new Error("Non authentifié")
+
+  if (rating !== null && (rating < 1 || rating > 5 || !Number.isInteger(rating))) {
+    throw new Error("Note invalide")
+  }
+  if (comment.length > 500) throw new Error("Commentaire trop long (max 500 caractères)")
+
+  await prisma.workout.updateMany({
+    where: { id: workoutId, userId: session.user.id, status: "EN_COURS" },
+    data: {
+      status: "TERMINEE",
+      completedAt: new Date(),
+      rating,
+      comment: comment.trim() || null,
+    },
+  })
+}
+
 export async function saveExerciseNote(
   workoutExerciseId: string,
   note: string

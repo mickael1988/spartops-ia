@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { startWorkout, completeSet, finishWorkout, saveExerciseNote } from "../../actions"
+import { startWorkout, completeSet, finishWorkout, rateAndFinishWorkout, saveExerciseNote } from "../../actions"
 import type { Workout, WorkoutExercise, Exercise, MuscleGroup } from "@/generated/prisma/client"
 import type { HistoryEntry, Suggestion } from "./page"
 
@@ -283,6 +283,9 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
   const [started, setStarted] = useState(workout.status === "EN_COURS")
   const [starting, setStarting] = useState(false)
   const [finishing, setFinishing] = useState(false)
+  const [showRatingStep, setShowRatingStep] = useState(false)
+  const [pendingRating, setPendingRating] = useState<number | null>(null)
+  const [pendingComment, setPendingComment] = useState("")
   const [validatingId, setValidatingId] = useState<string | null>(null)
   const [completedSetsMap, setCompletedSetsMap] = useState<Record<string, number>>(
     Object.fromEntries(workout.exercises.map((we) => [we.id, we.completedSets]))
@@ -414,19 +417,33 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
     }
   }
 
+  async function flushNotes() {
+    await Promise.all(
+      workout.exercises.map((we) => {
+        const note = noteMap[we.id] ?? ""
+        const original = we.note ?? ""
+        if (note === original) return Promise.resolve()
+        return saveExerciseNote(we.id, note).catch(() => {})
+      })
+    )
+  }
+
   async function handleFinish() {
     setFinishing(true)
     try {
-      // Flush all pending notes before finishing
-      await Promise.all(
-        workout.exercises.map((we) => {
-          const note = noteMap[we.id] ?? ""
-          const original = we.note ?? ""
-          if (note === original) return Promise.resolve()
-          return saveExerciseNote(we.id, note).catch(() => {})
-        })
-      )
+      await flushNotes()
       await finishWorkout(workout.id)
+      router.push(`/musculation/seance/${workout.id}`)
+    } catch {
+      setFinishing(false)
+    }
+  }
+
+  async function handleFinishWithRating() {
+    setFinishing(true)
+    try {
+      await flushNotes()
+      await rateAndFinishWorkout(workout.id, pendingRating, pendingComment)
       router.push(`/musculation/seance/${workout.id}`)
     } catch {
       setFinishing(false)
@@ -802,14 +819,63 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
             </div>
           </div>
 
-          <button
-            onClick={handleFinish}
-            disabled={finishing}
-            className="w-full rounded-2xl py-4 text-lg font-bold text-white disabled:opacity-60"
-            style={{ background: "linear-gradient(135deg, #11998e, #38ef7d)" }}
-          >
-            {finishing ? "Enregistrement…" : "🏁 Terminer la séance"}
-          </button>
+          {!showRatingStep ? (
+            <button
+              onClick={() => setShowRatingStep(true)}
+              className="w-full rounded-2xl py-4 text-lg font-bold text-white"
+              style={{ background: "linear-gradient(135deg, #11998e, #38ef7d)" }}
+            >
+              🏁 Terminer la séance
+            </button>
+          ) : (
+            <div className="space-y-4 border-t pt-4">
+              <p className="text-center text-sm font-semibold">Comment s&apos;est passée cette séance ?</p>
+
+              {/* Étoiles */}
+              <div className="flex justify-center gap-3">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => setPendingRating(star === pendingRating ? null : star)}
+                    className={`text-3xl transition-all active:scale-125 ${
+                      star <= (pendingRating ?? 0) ? "opacity-100" : "opacity-25"
+                    }`}
+                  >
+                    ⭐
+                  </button>
+                ))}
+              </div>
+
+              {/* Commentaire */}
+              <textarea
+                value={pendingComment}
+                onChange={(e) => setPendingComment(e.target.value)}
+                placeholder="Un commentaire ? (optionnel)"
+                rows={2}
+                maxLength={500}
+                className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm text-muted-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30"
+              />
+
+              {/* Boutons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleFinish}
+                  disabled={finishing}
+                  className="flex-1 rounded-xl border py-2.5 text-sm font-semibold hover:bg-muted active:bg-muted transition-colors disabled:opacity-50"
+                >
+                  Passer
+                </button>
+                <button
+                  onClick={handleFinishWithRating}
+                  disabled={finishing}
+                  className="flex-1 rounded-2xl py-2.5 text-sm font-bold text-white disabled:opacity-60"
+                  style={{ background: "linear-gradient(135deg, #11998e, #38ef7d)" }}
+                >
+                  {finishing ? "Enregistrement…" : "✓ Confirmer"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

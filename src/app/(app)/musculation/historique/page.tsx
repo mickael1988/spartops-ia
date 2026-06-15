@@ -76,10 +76,22 @@ export default async function HistoriquePage() {
                       {workout.exercises.length} exercice{workout.exercises.length > 1 ? "s" : ""}
                       {duration ? ` · ${duration}` : ""}
                     </p>
-                    {volume > 0 && (
-                      <span className="inline-flex items-center gap-1 mt-1 bg-primary/10 text-primary border border-primary/20 rounded-md px-2 py-0.5 text-xs font-bold">
-                        ⚡ {volume.toLocaleString("fr-FR")} kg soulevés
-                      </span>
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                      {volume > 0 && (
+                        <span className="inline-flex items-center gap-1 bg-primary/10 text-primary border border-primary/20 rounded-md px-2 py-0.5 text-xs font-bold">
+                          ⚡ {volume.toLocaleString("fr-FR")} kg soulevés
+                        </span>
+                      )}
+                      {workout.rating && (
+                        <span className="text-sm leading-none">
+                          {"⭐".repeat(workout.rating)}
+                        </span>
+                      )}
+                    </div>
+                    {workout.comment && (
+                      <p className="text-xs text-muted-foreground italic mt-1 line-clamp-1">
+                        &ldquo;{workout.comment}&rdquo;
+                      </p>
                     )}
                   </div>
                   <Link
