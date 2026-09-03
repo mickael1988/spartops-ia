@@ -11,6 +11,7 @@ import {
   History,
   BookOpen,
   CalendarDays,
+  CalendarRange,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -49,6 +50,11 @@ const navItems = [
     label: "Mes séances",
     href: "/musculation/mes-seances",
     icon: BookOpen,
+  },
+  {
+    label: "Programmes",
+    href: "/musculation/programmes",
+    icon: CalendarRange,
   },
   {
     label: "Historique",
