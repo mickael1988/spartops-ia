@@ -26,6 +26,7 @@ model User {
   workouts      Workout[]
   cardioSessions UserCardioSession[]
   oneRepMaxes   OneRepMax[]
+  programs      Program[]
 }
 
 model Session {
@@ -128,7 +129,8 @@ model Workout {
   rating      Int?
   comment     String?
 
-  exercises WorkoutExercise[]
+  exercises   WorkoutExercise[]
+  programDays ProgramDay[]
 }
 
 model WorkoutExercise {
@@ -171,6 +173,27 @@ model OneRepMax {
   inputWeight  Float?
   inputReps    Int?
   isManual     Boolean  @default(false)
+}
+
+model Program {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  isActive        Boolean  @default(false)
+  currentDayIndex Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  days ProgramDay[]
+}
+
+model ProgramDay {
+  id        String   @id @default(cuid())
+  programId String
+  program   Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  order     Int
+  workoutId String
+  workout   Workout  @relation(fields: [workoutId], references: [id], onDelete: Restrict)
 }
 
 // ==========================================
