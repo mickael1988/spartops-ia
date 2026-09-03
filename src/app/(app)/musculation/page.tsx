@@ -4,6 +4,7 @@ import { ArrowRight, PlusCircle, Dumbbell, TrendingUp, PlayCircle } from "lucide
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { prisma } from "@/lib/prisma"
 import { getSession } from "@/lib/session"
+import { ActiveProgramBanner } from "./active-program-banner"
 
 const BEAM = "conic-gradient(from 0deg, transparent 0%, transparent 30%, #3F5EFB 50%, #F50535 58%, transparent 72%, transparent 100%)"
 
@@ -36,6 +37,23 @@ export default async function MusculationPage() {
         totalExercises: inProgressWorkout.exercises.length,
       }
     : null
+
+  const activeProgram = inProgressWorkout
+    ? null
+    : await prisma.program.findFirst({
+        where: { userId: session.user.id, isActive: true },
+        include: {
+          days: {
+            orderBy: { order: "asc" },
+            include: { workout: { select: { name: true } } },
+          },
+        },
+      })
+
+  const activeProgramDay =
+    activeProgram && activeProgram.days.length > 0
+      ? activeProgram.days[activeProgram.currentDayIndex % activeProgram.days.length]
+      : null
 
   return (
     <div className="space-y-6">
@@ -70,6 +88,16 @@ export default async function MusculationPage() {
             Reprendre <ArrowRight className="h-4 w-4" />
           </span>
         </Link>
+      )}
+
+      {/* Bannière programme actif — mutuellement exclusive avec la bannière séance en cours */}
+      {activeProgram && activeProgramDay && (
+        <ActiveProgramBanner
+          programId={activeProgram.id}
+          programName={activeProgram.name}
+          dayIndex={activeProgram.currentDayIndex % activeProgram.days.length}
+          dayName={activeProgramDay.workout.name}
+        />
       )}
 
       {/* Cartes d'action — centrées, côte à côte */}
