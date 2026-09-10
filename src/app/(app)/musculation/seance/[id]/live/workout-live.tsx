@@ -3,7 +3,17 @@
 import Link from "next/link"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { startWorkout, completeSet, finishWorkout, rateAndFinishWorkout, saveExerciseNote } from "../../actions"
+import { saveExerciseNote } from "../../actions"
+import {
+  ensureLocalWorkout,
+  getUnsyncedSetLogs,
+  queueStartWorkout,
+  queueCompleteSet,
+  queueFinishWorkout,
+  queueRateAndFinishWorkout,
+  getPendingCount,
+  onOutboxChange,
+} from "@/lib/offline/outbox"
 import type { Workout, WorkoutExercise, Exercise, MuscleGroup } from "@/generated/prisma/client"
 import type { HistoryEntry, Suggestion } from "./page"
 
@@ -327,6 +337,51 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
   const router = useRouter()
   const [showQuitDialog, setShowQuitDialog] = useState(false)
   const handleCancelQuit = useCallback(() => setShowQuitDialog(false), [])
+  const [pendingCount, setPendingCount] = useState(0)
+  const [finishedOffline, setFinishedOffline] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      await ensureLocalWorkout({
+        id: workout.id,
+        name: workout.name,
+        exercises: workout.exercises.map((we) => ({
+          id: we.id,
+          exerciseId: we.exerciseId,
+          sets: we.sets,
+          restSeconds: we.restSeconds,
+        })),
+      })
+      const pendingLogs = await getUnsyncedSetLogs(workout.id)
+      if (cancelled || pendingLogs.length === 0) return
+      setCompletedSetsMap((prev) => {
+        const next = { ...prev }
+        for (const log of pendingLogs) {
+          next[log.workoutExerciseId] = Math.max(next[log.workoutExerciseId] ?? 0, log.setNumber)
+        }
+        return next
+      })
+      setWarmupSetsMap((prev) => {
+        const next = { ...prev }
+        for (const log of pendingLogs) {
+          if (log.setType === "WARMUP") next[log.workoutExerciseId] = (next[log.workoutExerciseId] ?? 0) + 1
+        }
+        return next
+      })
+    })()
+    return () => { cancelled = true }
+  }, [workout.id])
+
+  useEffect(() => {
+    let mounted = true
+    const refresh = () => {
+      getPendingCount(workout.id).then((c) => { if (mounted) setPendingCount(c) })
+    }
+    refresh()
+    const unsubscribe = onOutboxChange(refresh)
+    return () => { mounted = false; unsubscribe() }
+  }, [workout.id])
 
   // Premier exercice non terminé
   const activeIndex = workout.exercises.findIndex(
@@ -411,7 +466,7 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
   async function handleStart() {
     setStarting(true)
     try {
-      await startWorkout(workout.id)
+      await queueStartWorkout(workout.id)
       setStarted(true)
     } finally {
       setStarting(false)
@@ -433,8 +488,13 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
     setFinishing(true)
     try {
       await flushNotes()
-      await finishWorkout(workout.id)
-      router.push(`/musculation/seance/${workout.id}`)
+      await queueFinishWorkout(workout.id)
+      if (navigator.onLine) {
+        router.push(`/musculation/seance/${workout.id}`)
+      } else {
+        setFinishedOffline(true)
+        setFinishing(false)
+      }
     } catch {
       setFinishing(false)
     }
@@ -444,8 +504,13 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
     setFinishing(true)
     try {
       await flushNotes()
-      await rateAndFinishWorkout(workout.id, pendingRating, pendingComment)
-      router.push(`/musculation/seance/${workout.id}`)
+      await queueRateAndFinishWorkout(workout.id, pendingRating, pendingComment)
+      if (navigator.onLine) {
+        router.push(`/musculation/seance/${workout.id}`)
+      } else {
+        setFinishedOffline(true)
+        setFinishing(false)
+      }
     } catch {
       setFinishing(false)
     }
@@ -468,17 +533,18 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
     if (!pendingRpe || validatingId) return
     const { we, reps, weight, setType } = pendingRpe
     const done = completedSetsMap[we.id] ?? 0
+    const setNumber = done + 1
 
     setPendingRpe(null)
     setValidatingId(we.id)
     try {
-      await completeSet(we.id, reps, weight, setType, rpe)
-      setCompletedSetsMap((prev) => ({ ...prev, [we.id]: done + 1 }))
+      setCompletedSetsMap((prev) => ({ ...prev, [we.id]: setNumber }))
       if (setType === "WARMUP") {
         setWarmupSetsMap((prev) => ({ ...prev, [we.id]: (prev[we.id] ?? 0) + 1 }))
       }
       setTypeMap((prev) => ({ ...prev, [we.id]: "NORMAL" }))
       startRest(we.restSeconds, we.id)
+      await queueCompleteSet(workout.id, we.id, setNumber, reps, weight, setType, rpe)
     } finally {
       setValidatingId(null)
     }
@@ -542,6 +608,12 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
           ⏱ {formatTime(elapsedSeconds)}
         </span>
       </div>
+
+      {pendingCount > 0 && (
+        <p className="text-center text-[11px] text-muted-foreground">
+          ⏳ En attente de synchro ({pendingCount})
+        </p>
+      )}
 
       {/* Liste complète des exercices */}
       {workout.exercises.map((we, index) => {
@@ -824,7 +896,11 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
             </div>
           </div>
 
-          {!showRatingStep ? (
+          {finishedOffline ? (
+            <p className="text-center text-sm text-muted-foreground">
+              Séance enregistrée sur cet appareil — elle sera synchronisée automatiquement dès que la connexion revient.
+            </p>
+          ) : !showRatingStep ? (
             <button
               onClick={() => setShowRatingStep(true)}
               className="w-full rounded-2xl py-4 text-lg font-bold text-white"
