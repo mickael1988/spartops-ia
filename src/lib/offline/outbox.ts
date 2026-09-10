@@ -17,11 +17,12 @@ type CompleteSetPayload = {
   weight: number | null
   setType: SetTypeOffline
   rpe: number | null
+  completedAt: string
 }
 
 type StartWorkoutPayload = { workoutId: string }
-type FinishWorkoutPayload = { workoutId: string }
-type RateAndFinishWorkoutPayload = { workoutId: string; rating: number | null; comment: string }
+type FinishWorkoutPayload = { workoutId: string; completedAt: string }
+type RateAndFinishWorkoutPayload = { workoutId: string; rating: number | null; comment: string; completedAt: string }
 
 const listeners = new Set<() => void>()
 
@@ -34,23 +35,37 @@ function notify() {
   listeners.forEach((l) => l())
 }
 
+function generateId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID()
+  }
+  const bytes = new Uint8Array(16)
+  crypto.getRandomValues(bytes)
+  bytes[6] = (bytes[6] & 0x0f) | 0x40
+  bytes[8] = (bytes[8] & 0x3f) | 0x80
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
+}
+
 export async function ensureLocalWorkout(workout: {
   id: string
   name: string
   exercises: { id: string; exerciseId: string; sets: number; restSeconds: number }[]
 }): Promise<void> {
   const existing = await offlineDb.localWorkouts.get(workout.id)
-  if (existing) return
-  await offlineDb.localWorkouts.add({
-    workoutId: workout.id,
-    name: workout.name,
-    exercises: workout.exercises.map((ex) => ({
-      workoutExerciseId: ex.id,
-      exerciseId: ex.exerciseId,
-      sets: ex.sets,
-      restSeconds: ex.restSeconds,
-    })),
-  })
+  if (!existing) {
+    await offlineDb.localWorkouts.add({
+      workoutId: workout.id,
+      name: workout.name,
+      exercises: workout.exercises.map((ex) => ({
+        workoutExerciseId: ex.id,
+        exerciseId: ex.exerciseId,
+        sets: ex.sets,
+        restSeconds: ex.restSeconds,
+      })),
+    })
+  }
+  void drainOutbox()
 }
 
 export function getUnsyncedSetLogs(workoutId: string): Promise<LocalSetLog[]> {
@@ -61,8 +76,16 @@ export function getPendingCount(workoutId: string): Promise<number> {
   return offlineDb.outbox.where("workoutId").equals(workoutId).count()
 }
 
+export async function getSyncStatus(workoutId: string): Promise<{ pendingCount: number; hasFailed: boolean }> {
+  const entries = await offlineDb.outbox.where("workoutId").equals(workoutId).toArray()
+  return {
+    pendingCount: entries.length,
+    hasFailed: entries.some((e) => e.status === "failed"),
+  }
+}
+
 async function enqueue(workoutId: string, actionType: OutboxEntry["actionType"], payload: unknown): Promise<string> {
-  const outboxId = crypto.randomUUID()
+  const outboxId = generateId()
   await offlineDb.outbox.add({
     outboxId,
     workoutId,
@@ -89,13 +112,14 @@ export async function queueCompleteSet(
   setType: SetTypeOffline,
   rpe: number | null
 ): Promise<void> {
-  const outboxId = crypto.randomUUID()
+  const outboxId = generateId()
+  const completedAt = new Date().toISOString()
   await offlineDb.localSetLogs.add({ outboxId, workoutId, workoutExerciseId, setNumber, reps, weight, setType, rpe })
   await offlineDb.outbox.add({
     outboxId,
     workoutId,
     actionType: "completeSet",
-    payload: { workoutExerciseId, reps, weight, setType, rpe } satisfies CompleteSetPayload,
+    payload: { workoutExerciseId, reps, weight, setType, rpe, completedAt } satisfies CompleteSetPayload,
     status: "pending",
     createdAt: new Date().toISOString(),
   })
@@ -104,7 +128,10 @@ export async function queueCompleteSet(
 }
 
 export async function queueFinishWorkout(workoutId: string): Promise<void> {
-  await enqueue(workoutId, "finishWorkout", { workoutId } satisfies FinishWorkoutPayload)
+  await enqueue(workoutId, "finishWorkout", {
+    workoutId,
+    completedAt: new Date().toISOString(),
+  } satisfies FinishWorkoutPayload)
 }
 
 export async function queueRateAndFinishWorkout(
@@ -112,25 +139,33 @@ export async function queueRateAndFinishWorkout(
   rating: number | null,
   comment: string
 ): Promise<void> {
-  await enqueue(workoutId, "rateAndFinishWorkout", { workoutId, rating, comment } satisfies RateAndFinishWorkoutPayload)
+  await enqueue(workoutId, "rateAndFinishWorkout", {
+    workoutId,
+    rating,
+    comment,
+    completedAt: new Date().toISOString(),
+  } satisfies RateAndFinishWorkoutPayload)
 }
 
-let draining = false
+let drainPromise: Promise<void> | null = null
 
-export async function drainOutbox(): Promise<void> {
-  if (draining) return
-  if (typeof navigator !== "undefined" && !navigator.onLine) return
-  draining = true
-  try {
-    for (;;) {
-      const entry = await offlineDb.outbox.orderBy("createdAt").first()
-      if (!entry) break
-      const ok = await syncEntry(entry)
-      if (!ok) break
-    }
-  } finally {
-    draining = false
+export function drainOutbox(): Promise<void> {
+  if (typeof navigator !== "undefined" && !navigator.onLine) return Promise.resolve()
+  if (!drainPromise) {
+    drainPromise = (async () => {
+      try {
+        for (;;) {
+          const entry = await offlineDb.outbox.orderBy("createdAt").first()
+          if (!entry) break
+          const ok = await syncEntry(entry)
+          if (!ok) break
+        }
+      } finally {
+        drainPromise = null
+      }
+    })()
   }
+  return drainPromise
 }
 
 async function syncEntry(entry: OutboxEntry): Promise<boolean> {
@@ -145,18 +180,18 @@ async function syncEntry(entry: OutboxEntry): Promise<boolean> {
       }
       case "completeSet": {
         const p = entry.payload as CompleteSetPayload
-        await completeSet(p.workoutExerciseId, p.reps, p.weight, p.setType, p.rpe, entry.outboxId)
+        await completeSet(p.workoutExerciseId, p.reps, p.weight, p.setType, p.rpe, entry.outboxId, new Date(p.completedAt))
         await offlineDb.localSetLogs.delete(entry.outboxId)
         break
       }
       case "finishWorkout": {
-        const { workoutId } = entry.payload as FinishWorkoutPayload
-        await finishWorkout(workoutId)
+        const p = entry.payload as FinishWorkoutPayload
+        await finishWorkout(p.workoutId, new Date(p.completedAt))
         break
       }
       case "rateAndFinishWorkout": {
         const p = entry.payload as RateAndFinishWorkoutPayload
-        await rateAndFinishWorkout(p.workoutId, p.rating, p.comment)
+        await rateAndFinishWorkout(p.workoutId, p.rating, p.comment, new Date(p.completedAt))
         break
       }
     }

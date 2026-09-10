@@ -97,7 +97,8 @@ export async function completeSet(
   weight: number | null,
   setType: "NORMAL" | "WARMUP" | "DROP_SET" | "FAILURE" = "NORMAL",
   rpe: number | null = null,
-  clientRequestId?: string
+  clientRequestId?: string,
+  completedAt?: Date
 ): Promise<void> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session) throw new Error("Non authentifié")
@@ -133,6 +134,7 @@ export async function completeSet(
         setType,
         rpe,
         clientRequestId: clientRequestId ?? undefined,
+        completedAt: completedAt ?? undefined,
       },
     }),
   ])
@@ -276,20 +278,21 @@ export async function startFromTemplate(templateId: string): Promise<void> {
   redirect(`/musculation/seance/${workoutId}/live`)
 }
 
-export async function finishWorkout(workoutId: string): Promise<void> {
+export async function finishWorkout(workoutId: string, completedAt?: Date): Promise<void> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session) throw new Error("Non authentifié")
 
   await prisma.workout.updateMany({
     where: { id: workoutId, userId: session.user.id, status: "EN_COURS" },
-    data: { status: "TERMINEE", completedAt: new Date() },
+    data: { status: "TERMINEE", completedAt: completedAt ?? new Date() },
   })
 }
 
 export async function rateAndFinishWorkout(
   workoutId: string,
   rating: number | null,
-  comment: string
+  comment: string,
+  completedAt?: Date
 ): Promise<void> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session) throw new Error("Non authentifié")
@@ -303,7 +306,7 @@ export async function rateAndFinishWorkout(
     where: { id: workoutId, userId: session.user.id, status: "EN_COURS" },
     data: {
       status: "TERMINEE",
-      completedAt: new Date(),
+      completedAt: completedAt ?? new Date(),
       rating,
       comment: comment.trim() || null,
     },

@@ -11,7 +11,8 @@ import {
   queueCompleteSet,
   queueFinishWorkout,
   queueRateAndFinishWorkout,
-  getPendingCount,
+  getSyncStatus,
+  drainOutbox,
   onOutboxChange,
 } from "@/lib/offline/outbox"
 import type { Workout, WorkoutExercise, Exercise, MuscleGroup } from "@/generated/prisma/client"
@@ -338,7 +339,9 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
   const [showQuitDialog, setShowQuitDialog] = useState(false)
   const handleCancelQuit = useCallback(() => setShowQuitDialog(false), [])
   const [pendingCount, setPendingCount] = useState(0)
+  const [hasSyncFailed, setHasSyncFailed] = useState(false)
   const [finishedOffline, setFinishedOffline] = useState(false)
+  const [syncErrorMessage, setSyncErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -363,9 +366,15 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
         return next
       })
       setWarmupSetsMap((prev) => {
-        const next = { ...prev }
+        const pendingWarmupCounts: Record<string, number> = {}
         for (const log of pendingLogs) {
-          if (log.setType === "WARMUP") next[log.workoutExerciseId] = (next[log.workoutExerciseId] ?? 0) + 1
+          if (log.setType === "WARMUP") {
+            pendingWarmupCounts[log.workoutExerciseId] = (pendingWarmupCounts[log.workoutExerciseId] ?? 0) + 1
+          }
+        }
+        const next = { ...prev }
+        for (const [id, count] of Object.entries(pendingWarmupCounts)) {
+          next[id] = (warmupCountByExercise[id] ?? 0) + count
         }
         return next
       })
@@ -376,7 +385,11 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
   useEffect(() => {
     let mounted = true
     const refresh = () => {
-      getPendingCount(workout.id).then((c) => { if (mounted) setPendingCount(c) })
+      getSyncStatus(workout.id).then(({ pendingCount: c, hasFailed }) => {
+        if (!mounted) return
+        setPendingCount(c)
+        setHasSyncFailed(hasFailed)
+      })
     }
     refresh()
     const unsubscribe = onOutboxChange(refresh)
@@ -490,6 +503,7 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
       await flushNotes()
       await queueFinishWorkout(workout.id)
       if (navigator.onLine) {
+        await drainOutbox()
         router.push(`/musculation/seance/${workout.id}`)
       } else {
         setFinishedOffline(true)
@@ -506,6 +520,7 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
       await flushNotes()
       await queueRateAndFinishWorkout(workout.id, pendingRating, pendingComment)
       if (navigator.onLine) {
+        await drainOutbox()
         router.push(`/musculation/seance/${workout.id}`)
       } else {
         setFinishedOffline(true)
@@ -545,6 +560,14 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
       setTypeMap((prev) => ({ ...prev, [we.id]: "NORMAL" }))
       startRest(we.restSeconds, we.id)
       await queueCompleteSet(workout.id, we.id, setNumber, reps, weight, setType, rpe)
+    } catch (err) {
+      console.error("[handleConfirmSet]", err)
+      setCompletedSetsMap((prev) => ({ ...prev, [we.id]: done }))
+      if (setType === "WARMUP") {
+        setWarmupSetsMap((prev) => ({ ...prev, [we.id]: Math.max(0, (prev[we.id] ?? 1) - 1) }))
+      }
+      stopRest()
+      setSyncErrorMessage("Impossible d'enregistrer cette série sur cet appareil. Réessaie.")
     } finally {
       setValidatingId(null)
     }
@@ -609,9 +632,21 @@ export function WorkoutLive({ workout, historyByExercise, prByExercise, warmupCo
         </span>
       </div>
 
-      {pendingCount > 0 && (
+      {pendingCount > 0 && !hasSyncFailed && (
         <p className="text-center text-[11px] text-muted-foreground">
           ⏳ En attente de synchro ({pendingCount})
+        </p>
+      )}
+
+      {hasSyncFailed && (
+        <p className="text-center text-[11px] text-red-500" role="alert">
+          ⚠️ Synchronisation bloquée — reconnecte-toi et réessaie
+        </p>
+      )}
+
+      {syncErrorMessage && (
+        <p className="text-center text-[11px] text-red-500" role="alert">
+          ⚠️ {syncErrorMessage}
         </p>
       )}
 
