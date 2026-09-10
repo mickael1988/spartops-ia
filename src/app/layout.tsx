@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Geist, Fredoka } from "next/font/google"
 import { Providers } from "@/app/providers"
 import "./globals.css"
@@ -17,6 +17,12 @@ const fredoka = Fredoka({
 export const metadata: Metadata = {
   title: "SpartOps — Application Fitness",
   description: "Gérez vos entraînements et votre nutrition",
+  manifest: "/manifest.json",
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "SpartOps" },
+}
+
+export const viewport: Viewport = {
+  themeColor: "#3F5EFB",
 }
 
 export default function RootLayout({
