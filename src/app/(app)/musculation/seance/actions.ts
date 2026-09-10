@@ -96,7 +96,8 @@ export async function completeSet(
   reps: number,
   weight: number | null,
   setType: "NORMAL" | "WARMUP" | "DROP_SET" | "FAILURE" = "NORMAL",
-  rpe: number | null = null
+  rpe: number | null = null,
+  clientRequestId?: string
 ): Promise<void> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session) throw new Error("Non authentifié")
@@ -105,6 +106,11 @@ export async function completeSet(
 
   const VALID_SET_TYPES = ["NORMAL", "WARMUP", "DROP_SET", "FAILURE"] as const
   if (!VALID_SET_TYPES.includes(setType)) throw new Error("Type de série invalide")
+
+  if (clientRequestId) {
+    const existing = await prisma.setLog.findUnique({ where: { clientRequestId } })
+    if (existing) return
+  }
 
   const we = await prisma.workoutExercise.findFirst({
     where: { id: workoutExerciseId, workout: { userId: session.user.id } },
@@ -126,6 +132,7 @@ export async function completeSet(
         weight,
         setType,
         rpe,
+        clientRequestId: clientRequestId ?? undefined,
       },
     }),
   ])

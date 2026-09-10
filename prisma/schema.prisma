@@ -160,6 +160,7 @@ model SetLog {
   completedAt       DateTime        @default(now())
   setType           SetType         @default(NORMAL)
   rpe               Int?
+  clientRequestId   String?         @unique
 }
 
 model OneRepMax {
