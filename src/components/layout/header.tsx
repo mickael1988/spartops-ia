@@ -31,6 +31,10 @@ export function Header({ userName, userEmail }: HeaderProps) {
     .slice(0, 2)
 
   async function handleSignOut() {
+    // Purge le cache du Service Worker avant de partir : évite qu'un
+    // appareil partagé resserve la dernière page vue par cet utilisateur
+    // à quelqu'un d'autre, hors-ligne, une fois déconnecté.
+    navigator.serviceWorker?.controller?.postMessage({ type: "CLEAR_AUTH_CACHES" })
     await signOut()
     router.push("/login")
   }
