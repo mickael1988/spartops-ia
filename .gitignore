@@ -54,3 +54,4 @@ next-env.d.ts
 # implementation plans (ephemeral, specs in docs/superpowers/specs/ are committed)
 docs/superpowers/plans/
 .worktrees/
+.env*
