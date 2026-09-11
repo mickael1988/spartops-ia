@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
+import { getSessionCookie } from "better-auth/cookies"
 
 const PUBLIC_ROUTES = ["/", "/login", "/register"]
-
-// better-auth stocke la session dans ce cookie
-const SESSION_COOKIE = "better-auth.session_token"
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
@@ -15,9 +13,11 @@ export async function proxy(request: NextRequest) {
 
   // Vérification rapide : présence du cookie de session (pas de DB call)
   // La vraie validation de la session est faite par les server components via getSession()
-  const sessionCookie = request.cookies.get(SESSION_COOKIE)
+  // getSessionCookie gère le préfixe `__Secure-` ajouté par better-auth en HTTPS —
+  // un nom de cookie codé en dur ne matchait qu'en local (HTTP, pas de préfixe).
+  const sessionCookie = getSessionCookie(request)
 
-  if (!sessionCookie?.value) {
+  if (!sessionCookie) {
     return NextResponse.redirect(new URL("/login", request.url))
   }
 
