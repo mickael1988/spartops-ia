@@ -99,6 +99,8 @@ const exercises = [
 
 function slugifyName(name: string): string {
   return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "-")
     .replace(/-+/g, "-")
@@ -199,7 +201,7 @@ const cardioPrograms: CardioProgramSeed[] = [
   },
   {
     name: "Corde en Feu", description: "Un circuit centré sur la corde à sauter.",
-    format: "CIRCUIT", level: "INTERMEDIAIRE", durationMin: 6, equipment: "Corde à sauter", calories: 90,
+    format: "CIRCUIT", level: "DEBUTANT", durationMin: 6, equipment: "Corde à sauter", calories: 90,
     steps: [
       { exercise: "Corde à sauter", durationSec: 60, intensity: "MOYENNE" },
       { exercise: "Repos", durationSec: 30, intensity: "FAIBLE" },
@@ -249,12 +251,12 @@ const cardioPrograms: CardioProgramSeed[] = [
   },
   // AMRAP
   {
-    name: "Cindy Express", description: "Un enchaînement simple à répéter le plus de fois possible.",
+    name: "Trio Express", description: "Un enchaînement simple à répéter le plus de fois possible.",
     format: "AMRAP", level: "DEBUTANT", durationMin: 10, equipment: null, calories: 90,
     steps: [
-      { exercise: "Pompes", reps: 5, intensity: "MOYENNE" },
-      { exercise: "Sit-ups", reps: 10, intensity: "MOYENNE" },
-      { exercise: "Air squats", reps: 15, intensity: "MOYENNE" },
+      { exercise: "Pompes", reps: 6, intensity: "MOYENNE" },
+      { exercise: "Sit-ups", reps: 12, intensity: "MOYENNE" },
+      { exercise: "Air squats", reps: 18, intensity: "MOYENNE" },
     ],
   },
   {
@@ -267,7 +269,7 @@ const cardioPrograms: CardioProgramSeed[] = [
     ],
   },
   {
-    name: "AMRAP Boîte", description: "Un tour explosif avec une box.",
+    name: "AMRAP Boîte", description: "Un tour explosif avec une box et un medicine ball.",
     format: "AMRAP", level: "AVANCE", durationMin: 15, equipment: "Box, Medicine ball", calories: 180,
     steps: [
       { exercise: "Box jumps", reps: 10, intensity: "HAUTE" },
@@ -276,7 +278,7 @@ const cardioPrograms: CardioProgramSeed[] = [
     ],
   },
   {
-    name: "Fer et Sueur", description: "Un tour de force avec barre et kettlebell.",
+    name: "Fer et Sueur", description: "Un tour de force avec barre, kettlebell et barre de traction.",
     format: "AMRAP", level: "AVANCE", durationMin: 18, equipment: "Kettlebell, Barre, Barre de traction", calories: 210,
     steps: [
       { exercise: "Thrusters", reps: 8, intensity: "HAUTE" },
@@ -337,7 +339,7 @@ const cardioPrograms: CardioProgramSeed[] = [
   // FOR_TIME
   {
     name: "Sprint Final", description: "Une liste courte à enchaîner le plus vite possible.",
-    format: "FOR_TIME", level: "DEBUTANT", durationMin: 10, equipment: null, calories: 90,
+    format: "FOR_TIME", level: "DEBUTANT", durationMin: 5, equipment: null, calories: 50,
     steps: [
       { exercise: "Jumping jacks", reps: 30, intensity: "MOYENNE" },
       { exercise: "Air squats", reps: 20, intensity: "MOYENNE" },
@@ -357,8 +359,8 @@ const cardioPrograms: CardioProgramSeed[] = [
     ],
   },
   {
-    name: "Trois Tours", description: "Trois tours à base de box jumps, à enchaîner le plus vite possible.",
-    format: "FOR_TIME", level: "INTERMEDIAIRE", durationMin: 14, equipment: "Box", calories: 150,
+    name: "Box Express", description: "Un enchaînement à base de box jumps, à terminer le plus vite possible.",
+    format: "FOR_TIME", level: "INTERMEDIAIRE", durationMin: 6, equipment: "Box", calories: 70,
     steps: [
       { exercise: "Box jumps", reps: 15, intensity: "HAUTE" },
       { exercise: "Mountain climbers", reps: 30, intensity: "MOYENNE" },
@@ -367,7 +369,7 @@ const cardioPrograms: CardioProgramSeed[] = [
   },
   {
     name: "Fer & Chrono", description: "Un chrono exigeant à base de barre et kettlebell.",
-    format: "FOR_TIME", level: "AVANCE", durationMin: 16, equipment: "Barre, Kettlebell, Barre de traction", calories: 190,
+    format: "FOR_TIME", level: "AVANCE", durationMin: 8, equipment: "Barre, Kettlebell, Barre de traction", calories: 90,
     steps: [
       { exercise: "Thrusters", reps: 15, intensity: "HAUTE" },
       { exercise: "Kettlebell swings", reps: 20, intensity: "HAUTE" },
@@ -376,7 +378,7 @@ const cardioPrograms: CardioProgramSeed[] = [
   },
   {
     name: "La Complète", description: "Le chrono le plus complet du catalogue, à réserver aux plus aguerris.",
-    format: "FOR_TIME", level: "AVANCE", durationMin: 20, equipment: "Barre, Kettlebell, Box, Barre de traction", calories: 220,
+    format: "FOR_TIME", level: "AVANCE", durationMin: 10, equipment: "Barre, Kettlebell, Box, Barre de traction", calories: 110,
     steps: [
       { exercise: "Thrusters", reps: 12, intensity: "HAUTE" },
       { exercise: "Kettlebell swings", reps: 20, intensity: "HAUTE" },
