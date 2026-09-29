@@ -137,6 +137,255 @@ const cardioExercises: CardioExerciseSeed[] = [
   { name: "Repos", description: "Pause active ou passive entre deux efforts.", image: "💤", equipment: null, difficulty: "DEBUTANT" },
 ]
 
+type CardioStepSeed = {
+  exercise: string
+  durationSec?: number
+  reps?: number
+  intensity: "FAIBLE" | "MOYENNE" | "HAUTE"
+}
+
+type CardioProgramSeed = {
+  name: string
+  description: string
+  format: "CIRCUIT" | "AMRAP" | "EMOM" | "FOR_TIME"
+  level: "DEBUTANT" | "INTERMEDIAIRE" | "AVANCE"
+  durationMin: number
+  equipment: string | null
+  calories: number
+  steps: CardioStepSeed[]
+}
+
+const cardioPrograms: CardioProgramSeed[] = [
+  // CIRCUIT
+  {
+    name: "Réveil Cardio", description: "Un circuit doux pour se mettre en route, sans matériel.",
+    format: "CIRCUIT", level: "DEBUTANT", durationMin: 6, equipment: null, calories: 80,
+    steps: [
+      { exercise: "Jumping jacks", durationSec: 40, intensity: "MOYENNE" },
+      { exercise: "Repos", durationSec: 20, intensity: "FAIBLE" },
+      { exercise: "High knees", durationSec: 40, intensity: "MOYENNE" },
+      { exercise: "Repos", durationSec: 20, intensity: "FAIBLE" },
+      { exercise: "Mountain climbers", durationSec: 40, intensity: "MOYENNE" },
+      { exercise: "Repos", durationSec: 20, intensity: "FAIBLE" },
+      { exercise: "Air squats", durationSec: 40, intensity: "MOYENNE" },
+      { exercise: "Repos", durationSec: 20, intensity: "FAIBLE" },
+      { exercise: "Jumping jacks", durationSec: 40, intensity: "MOYENNE" },
+      { exercise: "Repos", durationSec: 20, intensity: "FAIBLE" },
+      { exercise: "High knees", durationSec: 40, intensity: "MOYENNE" },
+      { exercise: "Repos", durationSec: 20, intensity: "FAIBLE" },
+    ],
+  },
+  {
+    name: "Tabata Total", description: "Huit intervalles courts et intenses, sans matériel.",
+    format: "CIRCUIT", level: "INTERMEDIAIRE", durationMin: 4, equipment: null, calories: 70,
+    steps: [
+      { exercise: "Burpees", durationSec: 20, intensity: "HAUTE" },
+      { exercise: "Repos", durationSec: 10, intensity: "FAIBLE" },
+      { exercise: "Mountain climbers", durationSec: 20, intensity: "HAUTE" },
+      { exercise: "Repos", durationSec: 10, intensity: "FAIBLE" },
+      { exercise: "Squats sautés", durationSec: 20, intensity: "HAUTE" },
+      { exercise: "Repos", durationSec: 10, intensity: "FAIBLE" },
+      { exercise: "High knees", durationSec: 20, intensity: "HAUTE" },
+      { exercise: "Repos", durationSec: 10, intensity: "FAIBLE" },
+      { exercise: "Burpees", durationSec: 20, intensity: "HAUTE" },
+      { exercise: "Repos", durationSec: 10, intensity: "FAIBLE" },
+      { exercise: "Mountain climbers", durationSec: 20, intensity: "HAUTE" },
+      { exercise: "Repos", durationSec: 10, intensity: "FAIBLE" },
+      { exercise: "Squats sautés", durationSec: 20, intensity: "HAUTE" },
+      { exercise: "Repos", durationSec: 10, intensity: "FAIBLE" },
+      { exercise: "High knees", durationSec: 20, intensity: "HAUTE" },
+      { exercise: "Repos", durationSec: 10, intensity: "FAIBLE" },
+    ],
+  },
+  {
+    name: "Corde en Feu", description: "Un circuit centré sur la corde à sauter.",
+    format: "CIRCUIT", level: "INTERMEDIAIRE", durationMin: 6, equipment: "Corde à sauter", calories: 90,
+    steps: [
+      { exercise: "Corde à sauter", durationSec: 60, intensity: "MOYENNE" },
+      { exercise: "Repos", durationSec: 30, intensity: "FAIBLE" },
+      { exercise: "Corde à sauter", durationSec: 60, intensity: "MOYENNE" },
+      { exercise: "Repos", durationSec: 30, intensity: "FAIBLE" },
+      { exercise: "Corde à sauter", durationSec: 60, intensity: "MOYENNE" },
+      { exercise: "Repos", durationSec: 30, intensity: "FAIBLE" },
+      { exercise: "Corde à sauter", durationSec: 60, intensity: "MOYENNE" },
+      { exercise: "Repos", durationSec: 30, intensity: "FAIBLE" },
+    ],
+  },
+  {
+    name: "Feu Kettlebell", description: "Un circuit exigeant centré sur le kettlebell.",
+    format: "CIRCUIT", level: "AVANCE", durationMin: 6, equipment: "Kettlebell", calories: 140,
+    steps: [
+      { exercise: "Kettlebell swings", durationSec: 45, intensity: "HAUTE" },
+      { exercise: "Repos", durationSec: 15, intensity: "FAIBLE" },
+      { exercise: "Kettlebell swings", durationSec: 45, intensity: "HAUTE" },
+      { exercise: "Repos", durationSec: 15, intensity: "FAIBLE" },
+      { exercise: "Kettlebell swings", durationSec: 45, intensity: "HAUTE" },
+      { exercise: "Repos", durationSec: 15, intensity: "FAIBLE" },
+      { exercise: "Kettlebell swings", durationSec: 45, intensity: "HAUTE" },
+      { exercise: "Repos", durationSec: 15, intensity: "FAIBLE" },
+      { exercise: "Kettlebell swings", durationSec: 45, intensity: "HAUTE" },
+      { exercise: "Repos", durationSec: 15, intensity: "FAIBLE" },
+      { exercise: "Kettlebell swings", durationSec: 45, intensity: "HAUTE" },
+      { exercise: "Repos", durationSec: 15, intensity: "FAIBLE" },
+    ],
+  },
+  {
+    name: "Rameur Intervalles", description: "Un circuit long à base de rameur.",
+    format: "CIRCUIT", level: "AVANCE", durationMin: 8, equipment: "Rameur", calories: 170,
+    steps: [
+      { exercise: "Rowing", durationSec: 60, intensity: "HAUTE" },
+      { exercise: "Repos", durationSec: 20, intensity: "FAIBLE" },
+      { exercise: "Rowing", durationSec: 60, intensity: "HAUTE" },
+      { exercise: "Repos", durationSec: 20, intensity: "FAIBLE" },
+      { exercise: "Rowing", durationSec: 60, intensity: "HAUTE" },
+      { exercise: "Repos", durationSec: 20, intensity: "FAIBLE" },
+      { exercise: "Rowing", durationSec: 60, intensity: "HAUTE" },
+      { exercise: "Repos", durationSec: 20, intensity: "FAIBLE" },
+      { exercise: "Rowing", durationSec: 60, intensity: "HAUTE" },
+      { exercise: "Repos", durationSec: 20, intensity: "FAIBLE" },
+      { exercise: "Rowing", durationSec: 60, intensity: "HAUTE" },
+      { exercise: "Repos", durationSec: 20, intensity: "FAIBLE" },
+    ],
+  },
+  // AMRAP
+  {
+    name: "Cindy Express", description: "Un enchaînement simple à répéter le plus de fois possible.",
+    format: "AMRAP", level: "DEBUTANT", durationMin: 10, equipment: null, calories: 90,
+    steps: [
+      { exercise: "Pompes", reps: 5, intensity: "MOYENNE" },
+      { exercise: "Sit-ups", reps: 10, intensity: "MOYENNE" },
+      { exercise: "Air squats", reps: 15, intensity: "MOYENNE" },
+    ],
+  },
+  {
+    name: "Corps de Fer", description: "Un tour rapide et exigeant, sans matériel.",
+    format: "AMRAP", level: "INTERMEDIAIRE", durationMin: 12, equipment: null, calories: 130,
+    steps: [
+      { exercise: "Burpees", reps: 8, intensity: "HAUTE" },
+      { exercise: "Mountain climbers", reps: 20, intensity: "MOYENNE" },
+      { exercise: "Fentes sautées", reps: 12, intensity: "MOYENNE" },
+    ],
+  },
+  {
+    name: "AMRAP Boîte", description: "Un tour explosif avec une box.",
+    format: "AMRAP", level: "AVANCE", durationMin: 15, equipment: "Box, Medicine ball", calories: 180,
+    steps: [
+      { exercise: "Box jumps", reps: 10, intensity: "HAUTE" },
+      { exercise: "Wall balls", reps: 12, intensity: "HAUTE" },
+      { exercise: "Sit-ups", reps: 15, intensity: "MOYENNE" },
+    ],
+  },
+  {
+    name: "Fer et Sueur", description: "Un tour de force avec barre et kettlebell.",
+    format: "AMRAP", level: "AVANCE", durationMin: 18, equipment: "Kettlebell, Barre, Barre de traction", calories: 210,
+    steps: [
+      { exercise: "Thrusters", reps: 8, intensity: "HAUTE" },
+      { exercise: "Kettlebell swings", reps: 15, intensity: "HAUTE" },
+      { exercise: "Tractions", reps: 6, intensity: "HAUTE" },
+    ],
+  },
+  {
+    name: "Débutant Motivé", description: "Un tour accessible pour démarrer en douceur.",
+    format: "AMRAP", level: "DEBUTANT", durationMin: 8, equipment: null, calories: 70,
+    steps: [
+      { exercise: "Jumping jacks", reps: 20, intensity: "MOYENNE" },
+      { exercise: "Air squats", reps: 10, intensity: "MOYENNE" },
+      { exercise: "High knees", reps: 20, intensity: "MOYENNE" },
+    ],
+  },
+  // EMOM
+  {
+    name: "Minute Choc", description: "Deux exercices à enchaîner chaque minute.",
+    format: "EMOM", level: "DEBUTANT", durationMin: 10, equipment: null, calories: 80,
+    steps: [
+      { exercise: "Jumping jacks", durationSec: 30, intensity: "MOYENNE" },
+      { exercise: "Air squats", durationSec: 30, intensity: "MOYENNE" },
+    ],
+  },
+  {
+    name: "EMOM Kettlebell", description: "Un exercice kettlebell suivi de mountain climbers, chaque minute.",
+    format: "EMOM", level: "INTERMEDIAIRE", durationMin: 12, equipment: "Kettlebell", calories: 120,
+    steps: [
+      { exercise: "Kettlebell swings", durationSec: 30, intensity: "MOYENNE" },
+      { exercise: "Mountain climbers", durationSec: 30, intensity: "MOYENNE" },
+    ],
+  },
+  {
+    name: "Sprint Minute", description: "Trois exercices intenses à répartir sur chaque minute.",
+    format: "EMOM", level: "AVANCE", durationMin: 15, equipment: null, calories: 160,
+    steps: [
+      { exercise: "Burpees", durationSec: 20, intensity: "HAUTE" },
+      { exercise: "High knees", durationSec: 20, intensity: "HAUTE" },
+      { exercise: "Air squats", durationSec: 20, intensity: "MOYENNE" },
+    ],
+  },
+  {
+    name: "Corde Minutée", description: "Une minute de corde à sauter, minute après minute.",
+    format: "EMOM", level: "INTERMEDIAIRE", durationMin: 10, equipment: "Corde à sauter", calories: 100,
+    steps: [
+      { exercise: "Corde à sauter", durationSec: 60, intensity: "MOYENNE" },
+    ],
+  },
+  {
+    name: "EMOM Force", description: "Deux mouvements de force à haute intensité, chaque minute.",
+    format: "EMOM", level: "AVANCE", durationMin: 16, equipment: "Barre, Barre de traction", calories: 190,
+    steps: [
+      { exercise: "Thrusters", durationSec: 30, intensity: "HAUTE" },
+      { exercise: "Tractions", durationSec: 30, intensity: "HAUTE" },
+    ],
+  },
+  // FOR_TIME
+  {
+    name: "Sprint Final", description: "Une liste courte à enchaîner le plus vite possible.",
+    format: "FOR_TIME", level: "DEBUTANT", durationMin: 10, equipment: null, calories: 90,
+    steps: [
+      { exercise: "Jumping jacks", reps: 30, intensity: "MOYENNE" },
+      { exercise: "Air squats", reps: 20, intensity: "MOYENNE" },
+      { exercise: "Sit-ups", reps: 20, intensity: "MOYENNE" },
+    ],
+  },
+  {
+    name: "La Descente", description: "Une échelle descendante de burpees et squats, sans matériel.",
+    format: "FOR_TIME", level: "INTERMEDIAIRE", durationMin: 12, equipment: null, calories: 130,
+    steps: [
+      { exercise: "Burpees", reps: 21, intensity: "HAUTE" },
+      { exercise: "Air squats", reps: 21, intensity: "MOYENNE" },
+      { exercise: "Burpees", reps: 15, intensity: "HAUTE" },
+      { exercise: "Air squats", reps: 15, intensity: "MOYENNE" },
+      { exercise: "Burpees", reps: 9, intensity: "HAUTE" },
+      { exercise: "Air squats", reps: 9, intensity: "MOYENNE" },
+    ],
+  },
+  {
+    name: "Trois Tours", description: "Trois tours à base de box jumps, à enchaîner le plus vite possible.",
+    format: "FOR_TIME", level: "INTERMEDIAIRE", durationMin: 14, equipment: "Box", calories: 150,
+    steps: [
+      { exercise: "Box jumps", reps: 15, intensity: "HAUTE" },
+      { exercise: "Mountain climbers", reps: 30, intensity: "MOYENNE" },
+      { exercise: "Fentes sautées", reps: 20, intensity: "MOYENNE" },
+    ],
+  },
+  {
+    name: "Fer & Chrono", description: "Un chrono exigeant à base de barre et kettlebell.",
+    format: "FOR_TIME", level: "AVANCE", durationMin: 16, equipment: "Barre, Kettlebell, Barre de traction", calories: 190,
+    steps: [
+      { exercise: "Thrusters", reps: 15, intensity: "HAUTE" },
+      { exercise: "Kettlebell swings", reps: 20, intensity: "HAUTE" },
+      { exercise: "Tractions", reps: 10, intensity: "HAUTE" },
+    ],
+  },
+  {
+    name: "La Complète", description: "Le chrono le plus complet du catalogue, à réserver aux plus aguerris.",
+    format: "FOR_TIME", level: "AVANCE", durationMin: 20, equipment: "Barre, Kettlebell, Box, Barre de traction", calories: 220,
+    steps: [
+      { exercise: "Thrusters", reps: 12, intensity: "HAUTE" },
+      { exercise: "Kettlebell swings", reps: 20, intensity: "HAUTE" },
+      { exercise: "Box jumps", reps: 15, intensity: "HAUTE" },
+      { exercise: "Tractions", reps: 10, intensity: "HAUTE" },
+    ],
+  },
+]
+
 async function main() {
   console.log("Seeding muscle groups...")
   for (const group of muscleGroups) {
@@ -174,6 +423,36 @@ async function main() {
     cardioExerciseIds.set(ex.name, id)
   }
   console.log(`✅ ${cardioExercises.length} cardio exercises seeded`)
+
+  console.log("Seeding cardio programs (WOD)...")
+  for (const program of cardioPrograms) {
+    const { steps, ...programData } = program
+    const programId = `cardio-wod-${slugifyName(program.name)}`
+    await prisma.cardioProgram.upsert({
+      where: { id: programId },
+      update: {},
+      create: { id: programId, ...programData },
+    })
+    for (const [index, step] of steps.entries()) {
+      const exerciseId = cardioExerciseIds.get(step.exercise)
+      if (!exerciseId) throw new Error(`Exercice cardio introuvable: ${step.exercise}`)
+      const stepId = `${programId}-step-${index + 1}`
+      await prisma.cardioStep.upsert({
+        where: { id: stepId },
+        update: {},
+        create: {
+          id: stepId,
+          programId,
+          order: index + 1,
+          cardioExerciseId: exerciseId,
+          durationSec: step.durationSec ?? null,
+          reps: step.reps ?? null,
+          intensity: step.intensity,
+        },
+      })
+    }
+  }
+  console.log(`✅ ${cardioPrograms.length} cardio WOD seeded`)
 }
 
 main()
