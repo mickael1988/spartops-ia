@@ -259,6 +259,7 @@ model CardioStep {
   cardioExercise   CardioExercise @relation(fields: [cardioExerciseId], references: [id], onDelete: Restrict)
   durationSec      Int?
   reps             Int?
+  distanceM        Int?
   intensity        Intensity
 }
 

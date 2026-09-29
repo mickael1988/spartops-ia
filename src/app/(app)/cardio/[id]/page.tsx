@@ -13,6 +13,12 @@ const DURATION_LABELS = {
   FOR_TIME: (n: number) => `Temps indicatif : ${n} min`,
 } as const
 
+function formatStepUnit(step: { durationSec: number | null; reps: number | null; distanceM: number | null }) {
+  if (step.durationSec !== null) return `${step.durationSec}s`
+  if (step.distanceM !== null) return `${step.distanceM.toLocaleString("fr-FR")} m`
+  return `${step.reps} reps`
+}
+
 export default async function CardioWodPage({
   params,
 }: {
@@ -74,7 +80,7 @@ export default async function CardioWodPage({
             <div className="flex-1">
               <p className="font-medium text-sm">{step.cardioExercise.name}</p>
               <p className="text-xs text-muted-foreground">
-                {step.durationSec !== null ? `${step.durationSec}s` : `${step.reps} reps`}
+                {formatStepUnit(step)}
               </p>
             </div>
           </div>

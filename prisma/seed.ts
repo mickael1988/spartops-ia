@@ -141,13 +141,20 @@ const cardioExercises: CardioExerciseSeed[] = [
   { name: "Handstand push-ups", description: "En équilibre sur les mains contre un mur, fléchissez les bras puis repoussez.", image: "🤸", equipment: "Mur", difficulty: "AVANCE" },
   { name: "Clean and jerk", description: "Montez la barre du sol jusqu'aux épaules, puis au-dessus de la tête en deux temps.", image: "🏋️", equipment: "Barre", difficulty: "AVANCE" },
   { name: "Pistol squats", description: "Squat sur une jambe, l'autre tendue devant vous, puis remontez.", image: "🦵", equipment: null, difficulty: "AVANCE" },
+  { name: "Course", description: "Course à pied à allure soutenue, sur piste, route ou tapis.", image: "🏃", equipment: null, difficulty: "INTERMEDIAIRE" },
+  { name: "Overhead squats", description: "Squat complet avec la barre tenue bras tendus au-dessus de la tête.", image: "🏋️", equipment: "Barre", difficulty: "AVANCE" },
 ]
 
 type CardioStepSeed = {
   exercise: string
   durationSec?: number
   reps?: number
+  distanceM?: number
   intensity: "FAIBLE" | "MOYENNE" | "HAUTE"
+}
+
+function repeatSteps(times: number, steps: CardioStepSeed[]): CardioStepSeed[] {
+  return Array.from({ length: times }, () => steps).flat()
 }
 
 type CardioProgramSeed = {
@@ -474,6 +481,52 @@ const cardioPrograms: CardioProgramSeed[] = [
       { exercise: "Tractions", reps: 15, intensity: "HAUTE" },
     ],
   },
+  {
+    name: "Murph", description: "Le WOD en hommage au lieutenant Michael Murphy : 1,6 km de course, 100 tractions, 200 pompes, 300 air squats, puis 1,6 km de course. Traditionnellement avec un gilet lesté de 9 kg (hommes) / 6 kg (femmes).",
+    format: "FOR_TIME", level: "AVANCE", durationMin: 60, equipment: "Barre de traction", calories: 500, isBenchmark: true,
+    steps: [
+      { exercise: "Course", distanceM: 1600, intensity: "HAUTE" },
+      { exercise: "Tractions", reps: 100, intensity: "HAUTE" },
+      { exercise: "Pompes", reps: 200, intensity: "HAUTE" },
+      { exercise: "Air squats", reps: 300, intensity: "MOYENNE" },
+      { exercise: "Course", distanceM: 1600, intensity: "HAUTE" },
+    ],
+  },
+  {
+    name: "Helen", description: "3 tours : 400 m de course, 21 kettlebell swings, 12 tractions. Charge de référence : 24 kg (hommes) / 16 kg (femmes).",
+    format: "FOR_TIME", level: "INTERMEDIAIRE", durationMin: 12, equipment: "Kettlebell, Barre de traction", calories: 130, isBenchmark: true,
+    steps: repeatSteps(3, [
+      { exercise: "Course", distanceM: 400, intensity: "HAUTE" },
+      { exercise: "Kettlebell swings", reps: 21, intensity: "HAUTE" },
+      { exercise: "Tractions", reps: 12, intensity: "HAUTE" },
+    ]),
+  },
+  {
+    name: "Kelly", description: "5 tours : 400 m de course, 30 box jumps, 30 wall balls. Charge de référence : 9 kg (hommes) / 6 kg (femmes) pour les wall balls.",
+    format: "FOR_TIME", level: "INTERMEDIAIRE", durationMin: 30, equipment: "Box, Medicine ball", calories: 300, isBenchmark: true,
+    steps: repeatSteps(5, [
+      { exercise: "Course", distanceM: 400, intensity: "HAUTE" },
+      { exercise: "Box jumps", reps: 30, intensity: "HAUTE" },
+      { exercise: "Wall balls", reps: 30, intensity: "HAUTE" },
+    ]),
+  },
+  {
+    name: "Jackie", description: "1000 m de rameur, 50 thrusters, 30 tractions, le plus vite possible. Charge de référence : 20 kg (hommes) / 15 kg (femmes) pour les thrusters.",
+    format: "FOR_TIME", level: "INTERMEDIAIRE", durationMin: 12, equipment: "Rameur, Barre, Barre de traction", calories: 120, isBenchmark: true,
+    steps: [
+      { exercise: "Rowing", distanceM: 1000, intensity: "HAUTE" },
+      { exercise: "Thrusters", reps: 50, intensity: "HAUTE" },
+      { exercise: "Tractions", reps: 30, intensity: "HAUTE" },
+    ],
+  },
+  {
+    name: "Nancy", description: "5 tours : 400 m de course, 15 overhead squats. Charge de référence : 43 kg (hommes) / 30 kg (femmes).",
+    format: "FOR_TIME", level: "AVANCE", durationMin: 20, equipment: "Barre", calories: 200, isBenchmark: true,
+    steps: repeatSteps(5, [
+      { exercise: "Course", distanceM: 400, intensity: "HAUTE" },
+      { exercise: "Overhead squats", reps: 15, intensity: "HAUTE" },
+    ]),
+  },
 ]
 
 async function main() {
@@ -537,6 +590,7 @@ async function main() {
           cardioExerciseId: exerciseId,
           durationSec: step.durationSec ?? null,
           reps: step.reps ?? null,
+          distanceM: step.distanceM ?? null,
           intensity: step.intensity,
         },
       })
