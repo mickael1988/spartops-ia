@@ -27,6 +27,7 @@ function FilterPill({
   return (
     <Link
       href={href}
+      aria-current={active ? "true" : undefined}
       className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
         active
           ? "bg-primary text-primary-foreground border-primary"
@@ -45,18 +46,16 @@ export default async function CardioPage({
 }) {
   const { format, level, equipment } = await searchParams
 
-  const VALID_FORMATS = ["CIRCUIT", "AMRAP", "EMOM", "FOR_TIME"] as const
-  const VALID_LEVELS = ["DEBUTANT", "INTERMEDIAIRE", "AVANCE"] as const
-
-  const validFormat = VALID_FORMATS.find((f) => f === format)
-  const validLevel = VALID_LEVELS.find((l) => l === level)
+  const validFormat = FORMATS.find((f) => f.value === format)?.value
+  const validLevel = LEVELS.find((l) => l.value === level)?.value
+  const validEquipment = equipment === "avec" || equipment === "sans" ? equipment : undefined
 
   const wods = await prisma.cardioProgram.findMany({
     where: {
       userId: null,
       format: validFormat,
       level: validLevel,
-      equipment: equipment === "sans" ? null : equipment === "avec" ? { not: null } : undefined,
+      equipment: validEquipment === "sans" ? null : validEquipment === "avec" ? { not: null } : undefined,
     },
     orderBy: { name: "asc" },
     select: { id: true, name: true, format: true, level: true, durationMin: true, equipment: true, image: true },
@@ -64,7 +63,7 @@ export default async function CardioPage({
 
   function buildHref(next: Partial<{ format: string; level: string; equipment: string }>) {
     const params = new URLSearchParams()
-    const merged = { format, level, equipment, ...next }
+    const merged = { format: validFormat, level: validLevel, equipment: validEquipment, ...next }
     if (merged.format) params.set("format", merged.format)
     if (merged.level) params.set("level", merged.level)
     if (merged.equipment) params.set("equipment", merged.equipment)
@@ -76,38 +75,47 @@ export default async function CardioPage({
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Cardio</h1>
-        <p className="text-muted-foreground mt-1">{wods.length} WOD disponibles</p>
+        <p className="text-muted-foreground mt-1">{wods.length} WOD disponible{wods.length > 1 ? "s" : ""}</p>
       </div>
 
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap gap-2">
-          <FilterPill href={buildHref({ format: undefined })} active={!format}>Tous les formats</FilterPill>
+          <FilterPill href={buildHref({ format: undefined })} active={!validFormat}>Tous les formats</FilterPill>
           {FORMATS.map((f) => (
-            <FilterPill key={f.value} href={buildHref({ format: f.value })} active={format === f.value}>
+            <FilterPill key={f.value} href={buildHref({ format: f.value })} active={validFormat === f.value}>
               {f.label}
             </FilterPill>
           ))}
         </div>
         <div className="flex flex-wrap gap-2">
-          <FilterPill href={buildHref({ level: undefined })} active={!level}>Tous les niveaux</FilterPill>
+          <FilterPill href={buildHref({ level: undefined })} active={!validLevel}>Tous les niveaux</FilterPill>
           {LEVELS.map((l) => (
-            <FilterPill key={l.value} href={buildHref({ level: l.value })} active={level === l.value}>
+            <FilterPill key={l.value} href={buildHref({ level: l.value })} active={validLevel === l.value}>
               {l.label}
             </FilterPill>
           ))}
         </div>
         <div className="flex flex-wrap gap-2">
-          <FilterPill href={buildHref({ equipment: undefined })} active={!equipment}>Tout matériel</FilterPill>
-          <FilterPill href={buildHref({ equipment: "sans" })} active={equipment === "sans"}>Sans matériel</FilterPill>
-          <FilterPill href={buildHref({ equipment: "avec" })} active={equipment === "avec"}>Avec matériel</FilterPill>
+          <FilterPill href={buildHref({ equipment: undefined })} active={!validEquipment}>Tout matériel</FilterPill>
+          <FilterPill href={buildHref({ equipment: "sans" })} active={validEquipment === "sans"}>Sans matériel</FilterPill>
+          <FilterPill href={buildHref({ equipment: "avec" })} active={validEquipment === "avec"}>Avec matériel</FilterPill>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {wods.map((wod) => (
-          <WodCard key={wod.id} wod={wod} />
-        ))}
-      </div>
+      {wods.length === 0 ? (
+        <div className="rounded-2xl border bg-background/80 backdrop-blur-sm p-6 text-center space-y-2">
+          <p className="text-sm text-muted-foreground">Aucun WOD ne correspond à ces filtres.</p>
+          <Link href="/cardio" className="text-sm font-medium text-primary hover:underline">
+            Réinitialiser les filtres
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {wods.map((wod) => (
+            <WodCard key={wod.id} wod={wod} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
