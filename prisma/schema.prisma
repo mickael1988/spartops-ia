@@ -25,6 +25,7 @@ model User {
   accounts      Account[]
   workouts      Workout[]
   cardioSessions UserCardioSession[]
+  cardioPrograms CardioProgram[]
   oneRepMaxes   OneRepMax[]
   programs      Program[]
 }
@@ -213,13 +214,34 @@ enum Intensity {
   HAUTE
 }
 
-model CardioProgram {
-  id          String       @id @default(cuid())
+enum CardioFormat {
+  CIRCUIT
+  AMRAP
+  EMOM
+  FOR_TIME
+}
+
+model CardioExercise {
+  id          String     @id @default(cuid())
   name        String
   description String
+  image       String?
+  equipment   String?
+  difficulty  Difficulty
+
+  steps CardioStep[]
+}
+
+model CardioProgram {
+  id          String        @id @default(cuid())
+  userId      String?
+  user        User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String
+  format      CardioFormat
   level       CardioLevel
   durationMin Int
-  type        String
+  equipment   String?
   calories    Int?
   image       String?
 
@@ -228,13 +250,15 @@ model CardioProgram {
 }
 
 model CardioStep {
-  id          String        @id @default(cuid())
-  programId   String
-  program     CardioProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
-  order       Int
-  name        String
-  durationSec Int
-  intensity   Intensity
+  id               String         @id @default(cuid())
+  programId        String
+  program          CardioProgram  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  order            Int
+  cardioExerciseId String
+  cardioExercise   CardioExercise @relation(fields: [cardioExerciseId], references: [id], onDelete: Restrict)
+  durationSec      Int?
+  reps             Int?
+  intensity        Intensity
 }
 
 model UserCardioSession {
