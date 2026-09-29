@@ -244,6 +244,7 @@ model CardioProgram {
   equipment   String?
   calories    Int?
   image       String?
+  isBenchmark Boolean       @default(false)
 
   steps    CardioStep[]
   sessions UserCardioSession[]

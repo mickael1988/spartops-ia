@@ -137,6 +137,10 @@ const cardioExercises: CardioExerciseSeed[] = [
   { name: "Air squats", description: "Descendez en squat poids du corps puis remontez complètement.", image: "🦵", equipment: null, difficulty: "DEBUTANT" },
   { name: "Dips", description: "Aux barres parallèles, descendez en pliant les coudes puis repoussez.", image: "💪", equipment: "Barres parallèles", difficulty: "INTERMEDIAIRE" },
   { name: "Repos", description: "Pause active ou passive entre deux efforts.", image: "💤", equipment: null, difficulty: "DEBUTANT" },
+  { name: "Soulevé de terre", description: "Barre au sol, dos droit, redressez-vous en poussant dans les jambes puis reposez la barre.", image: "🏋️", equipment: "Barre", difficulty: "INTERMEDIAIRE" },
+  { name: "Handstand push-ups", description: "En équilibre sur les mains contre un mur, fléchissez les bras puis repoussez.", image: "🤸", equipment: "Mur", difficulty: "AVANCE" },
+  { name: "Clean and jerk", description: "Montez la barre du sol jusqu'aux épaules, puis au-dessus de la tête en deux temps.", image: "🏋️", equipment: "Barre", difficulty: "AVANCE" },
+  { name: "Pistol squats", description: "Squat sur une jambe, l'autre tendue devant vous, puis remontez.", image: "🦵", equipment: null, difficulty: "AVANCE" },
 ]
 
 type CardioStepSeed = {
@@ -154,6 +158,7 @@ type CardioProgramSeed = {
   durationMin: number
   equipment: string | null
   calories: number
+  isBenchmark?: boolean
   steps: CardioStepSeed[]
 }
 
@@ -384,6 +389,89 @@ const cardioPrograms: CardioProgramSeed[] = [
       { exercise: "Kettlebell swings", reps: 20, intensity: "HAUTE" },
       { exercise: "Box jumps", reps: 15, intensity: "HAUTE" },
       { exercise: "Tractions", reps: 10, intensity: "HAUTE" },
+    ],
+  },
+  // CLASSIQUES (benchmarks historiques du CrossFit)
+  {
+    name: "Fran", description: "Le classique des classiques : 21-15-9 thrusters et tractions, le plus vite possible. Charge de référence : 43 kg (hommes) / 30 kg (femmes).",
+    format: "FOR_TIME", level: "AVANCE", durationMin: 8, equipment: "Barre, Barre de traction", calories: 90, isBenchmark: true,
+    steps: [
+      { exercise: "Thrusters", reps: 21, intensity: "HAUTE" },
+      { exercise: "Tractions", reps: 21, intensity: "HAUTE" },
+      { exercise: "Thrusters", reps: 15, intensity: "HAUTE" },
+      { exercise: "Tractions", reps: 15, intensity: "HAUTE" },
+      { exercise: "Thrusters", reps: 9, intensity: "HAUTE" },
+      { exercise: "Tractions", reps: 9, intensity: "HAUTE" },
+    ],
+  },
+  {
+    name: "Cindy", description: "20 minutes, autant de tours que possible : 5 tractions, 10 pompes, 15 air squats.",
+    format: "AMRAP", level: "INTERMEDIAIRE", durationMin: 20, equipment: "Barre de traction", calories: 200, isBenchmark: true,
+    steps: [
+      { exercise: "Tractions", reps: 5, intensity: "HAUTE" },
+      { exercise: "Pompes", reps: 10, intensity: "MOYENNE" },
+      { exercise: "Air squats", reps: 15, intensity: "MOYENNE" },
+    ],
+  },
+  {
+    name: "Annie", description: "50-40-30-20-10 double-unders et sit-ups, le plus vite possible.",
+    format: "FOR_TIME", level: "AVANCE", durationMin: 10, equipment: "Corde à sauter", calories: 100, isBenchmark: true,
+    steps: [
+      { exercise: "Double-unders", reps: 50, intensity: "HAUTE" },
+      { exercise: "Sit-ups", reps: 50, intensity: "MOYENNE" },
+      { exercise: "Double-unders", reps: 40, intensity: "HAUTE" },
+      { exercise: "Sit-ups", reps: 40, intensity: "MOYENNE" },
+      { exercise: "Double-unders", reps: 30, intensity: "HAUTE" },
+      { exercise: "Sit-ups", reps: 30, intensity: "MOYENNE" },
+      { exercise: "Double-unders", reps: 20, intensity: "HAUTE" },
+      { exercise: "Sit-ups", reps: 20, intensity: "MOYENNE" },
+      { exercise: "Double-unders", reps: 10, intensity: "HAUTE" },
+      { exercise: "Sit-ups", reps: 10, intensity: "MOYENNE" },
+    ],
+  },
+  {
+    name: "Angie", description: "100 tractions, 100 pompes, 100 sit-ups, 100 air squats, dans cet ordre, le plus vite possible.",
+    format: "FOR_TIME", level: "INTERMEDIAIRE", durationMin: 30, equipment: "Barre de traction", calories: 250, isBenchmark: true,
+    steps: [
+      { exercise: "Tractions", reps: 100, intensity: "HAUTE" },
+      { exercise: "Pompes", reps: 100, intensity: "HAUTE" },
+      { exercise: "Sit-ups", reps: 100, intensity: "MOYENNE" },
+      { exercise: "Air squats", reps: 100, intensity: "MOYENNE" },
+    ],
+  },
+  {
+    name: "Karen", description: "150 wall balls, le plus vite possible. Charge de référence : 9 kg (hommes) / 6 kg (femmes).",
+    format: "FOR_TIME", level: "INTERMEDIAIRE", durationMin: 15, equipment: "Medicine ball", calories: 150, isBenchmark: true,
+    steps: [
+      { exercise: "Wall balls", reps: 150, intensity: "HAUTE" },
+    ],
+  },
+  {
+    name: "Diane", description: "21-15-9 soulevés de terre et handstand push-ups, le plus vite possible. Charge de référence : 102 kg (hommes) / 70 kg (femmes).",
+    format: "FOR_TIME", level: "AVANCE", durationMin: 10, equipment: "Barre, Mur", calories: 100, isBenchmark: true,
+    steps: [
+      { exercise: "Soulevé de terre", reps: 21, intensity: "HAUTE" },
+      { exercise: "Handstand push-ups", reps: 21, intensity: "HAUTE" },
+      { exercise: "Soulevé de terre", reps: 15, intensity: "HAUTE" },
+      { exercise: "Handstand push-ups", reps: 15, intensity: "HAUTE" },
+      { exercise: "Soulevé de terre", reps: 9, intensity: "HAUTE" },
+      { exercise: "Handstand push-ups", reps: 9, intensity: "HAUTE" },
+    ],
+  },
+  {
+    name: "Grace", description: "30 clean and jerk, le plus vite possible. Charge de référence : 61 kg (hommes) / 43 kg (femmes).",
+    format: "FOR_TIME", level: "AVANCE", durationMin: 8, equipment: "Barre", calories: 90, isBenchmark: true,
+    steps: [
+      { exercise: "Clean and jerk", reps: 30, intensity: "HAUTE" },
+    ],
+  },
+  {
+    name: "Mary", description: "20 minutes, autant de tours que possible : 5 handstand push-ups, 10 pistol squats, 15 tractions.",
+    format: "AMRAP", level: "AVANCE", durationMin: 20, equipment: "Barre de traction, Mur", calories: 200, isBenchmark: true,
+    steps: [
+      { exercise: "Handstand push-ups", reps: 5, intensity: "HAUTE" },
+      { exercise: "Pistol squats", reps: 10, intensity: "HAUTE" },
+      { exercise: "Tractions", reps: 15, intensity: "HAUTE" },
     ],
   },
 ]

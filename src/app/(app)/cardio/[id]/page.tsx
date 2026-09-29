@@ -36,7 +36,10 @@ export default async function CardioWodPage({
     <div className="space-y-6">
       {/* Breadcrumb */}
       <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm text-muted-foreground">
-        <Link href="/cardio" className="hover:text-foreground transition-colors">
+        <Link
+          href={wod.isBenchmark ? "/cardio?tab=classiques" : "/cardio"}
+          className="hover:text-foreground transition-colors"
+        >
           Cardio
         </Link>
         <ChevronRight className="h-4 w-4" />
@@ -52,6 +55,7 @@ export default async function CardioWodPage({
         <p className="text-muted-foreground mt-1">{wod.description}</p>
         <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground">
           <span className="font-semibold text-primary">{FORMAT_LABELS[wod.format]}</span>
+          {wod.isBenchmark && <span className="font-semibold text-[#F50535]">Classique</span>}
           <span>{LEVEL_LABELS[wod.level]}</span>
           <span>{DURATION_LABELS[wod.format](wod.durationMin)}</span>
           <span>{wod.equipment ?? "Sans matériel"}</span>

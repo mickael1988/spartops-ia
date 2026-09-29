@@ -40,13 +40,39 @@ function FilterPill({
   )
 }
 
+function TabLink({
+  href,
+  active,
+  children,
+}: {
+  href: string
+  active: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={`rounded-xl border px-4 py-2 text-sm font-semibold transition-colors ${
+        active
+          ? "text-white border-transparent"
+          : "text-muted-foreground hover:border-primary hover:text-primary"
+      }`}
+      style={active ? { background: "linear-gradient(to right, #3F5EFB, #F50535)" } : undefined}
+    >
+      {children}
+    </Link>
+  )
+}
+
 export default async function CardioPage({
   searchParams,
 }: {
-  searchParams: Promise<{ format?: string; level?: string; equipment?: string }>
+  searchParams: Promise<{ tab?: string; format?: string; level?: string; equipment?: string }>
 }) {
-  const { format, level, equipment } = await searchParams
+  const { tab: rawTab, format, level, equipment } = await searchParams
 
+  const tab = rawTab === "classiques" ? "classiques" : "catalogue"
   const validFormat = FORMATS.find((f) => f.value === format)?.value
   const validLevel = LEVELS.find((l) => l.value === level)?.value
   const validEquipment = equipment === "avec" || equipment === "sans" ? equipment : undefined
@@ -54,6 +80,7 @@ export default async function CardioPage({
   const wods = await prisma.cardioProgram.findMany({
     where: {
       userId: null,
+      isBenchmark: tab === "classiques",
       format: validFormat,
       level: validLevel,
       equipment: validEquipment === "sans" ? null : validEquipment === "avec" ? { not: null } : undefined,
@@ -65,6 +92,7 @@ export default async function CardioPage({
   function buildHref(next: Partial<{ format: string; level: string; equipment: string }>) {
     const params = new URLSearchParams()
     const merged = { format: validFormat, level: validLevel, equipment: validEquipment, ...next }
+    if (tab === "classiques") params.set("tab", "classiques")
     if (merged.format) params.set("format", merged.format)
     if (merged.level) params.set("level", merged.level)
     if (merged.equipment) params.set("equipment", merged.equipment)
@@ -76,8 +104,18 @@ export default async function CardioPage({
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Cardio</h1>
+        {tab === "classiques" && (
+          <p className="text-muted-foreground mt-1">
+            Les benchmarks historiques du CrossFit, à refaire régulièrement pour mesurer ta progression.
+          </p>
+        )}
         <p className="text-muted-foreground mt-1">{wods.length} WOD disponible{wods.length > 1 ? "s" : ""}</p>
       </div>
+
+      <nav aria-label="Catalogue" className="flex gap-2">
+        <TabLink href="/cardio" active={tab === "catalogue"}>Nos WOD</TabLink>
+        <TabLink href="/cardio?tab=classiques" active={tab === "classiques"}>Classiques</TabLink>
+      </nav>
 
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap gap-2">
@@ -106,7 +144,10 @@ export default async function CardioPage({
       {wods.length === 0 ? (
         <div className="rounded-2xl border bg-background/80 backdrop-blur-sm p-6 text-center space-y-2">
           <p className="text-sm text-muted-foreground">Aucun WOD ne correspond à ces filtres.</p>
-          <Link href="/cardio" className="text-sm font-medium text-primary hover:underline">
+          <Link
+            href={buildHref({ format: undefined, level: undefined, equipment: undefined })}
+            className="text-sm font-medium text-primary hover:underline"
+          >
             Réinitialiser les filtres
           </Link>
         </div>
