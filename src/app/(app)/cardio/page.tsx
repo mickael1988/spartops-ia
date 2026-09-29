@@ -33,7 +33,7 @@ function FilterPill({
           ? "text-white border-transparent"
           : "text-muted-foreground hover:border-primary hover:text-primary"
       }`}
-      style={active ? { background: "linear-gradient(90deg, #3F5EFB, #F50535, #3F5EFB)" } : undefined}
+      style={active ? { background: "linear-gradient(to right, #3F5EFB, #F50535)" } : undefined}
     >
       {children}
     </Link>
