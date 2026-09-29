@@ -30,9 +30,10 @@ function FilterPill({
       aria-current={active ? "true" : undefined}
       className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
         active
-          ? "bg-primary text-primary-foreground border-primary"
+          ? "text-white border-transparent"
           : "text-muted-foreground hover:border-primary hover:text-primary"
       }`}
+      style={active ? { background: "linear-gradient(90deg, #3F5EFB, #F50535, #3F5EFB)" } : undefined}
     >
       {children}
     </Link>
