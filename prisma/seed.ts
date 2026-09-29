@@ -97,6 +97,46 @@ const exercises = [
   { slug: "fessiers", name: "Good morning", description: "Barre sur les épaules, penchez le buste en avant en gardant le dos droit pour étirer les fessiers.", difficulty: "AVANCE" as const, equipment: "Barre", image: "🌅" },
 ]
 
+function slugifyName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+}
+
+type CardioExerciseSeed = {
+  name: string
+  description: string
+  image: string
+  equipment: string | null
+  difficulty: "DEBUTANT" | "INTERMEDIAIRE" | "AVANCE"
+}
+
+const cardioExercises: CardioExerciseSeed[] = [
+  { name: "Burpees", description: "Descendez en position de pompe, effectuez une pompe, ramenez les pieds sous vous et sautez en l'air.", image: "🔥", equipment: null, difficulty: "INTERMEDIAIRE" },
+  { name: "Jumping jacks", description: "Sautez en écartant bras et jambes, puis revenez en position de départ.", image: "⭐", equipment: null, difficulty: "DEBUTANT" },
+  { name: "Mountain climbers", description: "En position de planche, ramenez alternativement les genoux vers la poitrine à un rythme soutenu.", image: "🏃", equipment: null, difficulty: "DEBUTANT" },
+  { name: "Squats sautés", description: "Descendez en squat puis explosez vers le haut en sautant.", image: "🦵", equipment: null, difficulty: "INTERMEDIAIRE" },
+  { name: "Fentes sautées", description: "Alternez les jambes en sautant entre chaque fente.", image: "🦵", equipment: null, difficulty: "INTERMEDIAIRE" },
+  { name: "Corde à sauter", description: "Sautez à la corde à un rythme régulier.", image: "🪢", equipment: "Corde à sauter", difficulty: "DEBUTANT" },
+  { name: "Gainage", description: "Maintenez une position de planche, corps aligné, abdominaux gainés.", image: "🧘", equipment: null, difficulty: "DEBUTANT" },
+  { name: "Sit-ups", description: "Allongé sur le dos, genoux pliés, relevez le buste jusqu'aux genoux.", image: "🎯", equipment: null, difficulty: "DEBUTANT" },
+  { name: "Pompes", description: "En appui sur les mains et les pieds, fléchissez les coudes pour descendre la poitrine vers le sol.", image: "💪", equipment: null, difficulty: "INTERMEDIAIRE" },
+  { name: "High knees", description: "Courez sur place en montant les genoux le plus haut possible.", image: "🏃", equipment: null, difficulty: "DEBUTANT" },
+  { name: "Wall balls", description: "Lancez un medicine ball contre un mur en sortant d'un squat, rattrapez et recommencez.", image: "🏀", equipment: "Medicine ball", difficulty: "AVANCE" },
+  { name: "Kettlebell swings", description: "Balancez le kettlebell entre les jambes puis jusqu'à hauteur d'épaules grâce à la poussée des hanches.", image: "🏋️", equipment: "Kettlebell", difficulty: "INTERMEDIAIRE" },
+  { name: "Box jumps", description: "Sautez pieds joints sur une plateforme surélevée.", image: "📦", equipment: "Box", difficulty: "AVANCE" },
+  { name: "Double-unders", description: "Faites passer la corde deux fois sous les pieds à chaque saut.", image: "🪢", equipment: "Corde à sauter", difficulty: "AVANCE" },
+  { name: "Thrusters", description: "Enchaînez un squat avant et une poussée de la barre au-dessus de la tête.", image: "🏋️", equipment: "Barre", difficulty: "AVANCE" },
+  { name: "Rowing", description: "Ramez à intensité soutenue sur la machine.", image: "🚣", equipment: "Rameur", difficulty: "INTERMEDIAIRE" },
+  { name: "Vélo", description: "Pédalez à intensité soutenue sur le vélo d'appartement.", image: "🚴", equipment: "Vélo d'appartement", difficulty: "INTERMEDIAIRE" },
+  { name: "Tractions", description: "Suspendu à la barre, tirez le corps vers le haut jusqu'à ce que le menton dépasse la barre.", image: "💪", equipment: "Barre de traction", difficulty: "AVANCE" },
+  { name: "Air squats", description: "Descendez en squat poids du corps puis remontez complètement.", image: "🦵", equipment: null, difficulty: "DEBUTANT" },
+  { name: "Dips", description: "Aux barres parallèles, descendez en pliant les coudes puis repoussez.", image: "💪", equipment: "Barres parallèles", difficulty: "INTERMEDIAIRE" },
+  { name: "Repos", description: "Pause active ou passive entre deux efforts.", image: "💤", equipment: null, difficulty: "DEBUTANT" },
+]
+
 async function main() {
   console.log("Seeding muscle groups...")
   for (const group of muscleGroups) {
@@ -121,6 +161,19 @@ async function main() {
     })
   }
   console.log(`✅ ${exercises.length} exercises seeded`)
+
+  console.log("Seeding cardio exercises...")
+  const cardioExerciseIds = new Map<string, string>()
+  for (const ex of cardioExercises) {
+    const id = `cardio-ex-${slugifyName(ex.name)}`
+    await prisma.cardioExercise.upsert({
+      where: { id },
+      update: {},
+      create: { id, ...ex },
+    })
+    cardioExerciseIds.set(ex.name, id)
+  }
+  console.log(`✅ ${cardioExercises.length} cardio exercises seeded`)
 }
 
 main()
