@@ -41,6 +41,10 @@ export function unlockAudio(): void {
     if (!Ctor) return
     if (!audioContext) audioContext = new Ctor()
     if (audioContext.state !== "running") void audioContext.resume()
+    // iOS : joue le Web Audio même avec l'interrupteur silencieux activé (best-effort)
+    if ("audioSession" in navigator) {
+      ;(navigator as unknown as { audioSession: { type: string } }).audioSession.type = "playback"
+    }
   } catch {
     // audio indisponible : la séance continue sans son
   }

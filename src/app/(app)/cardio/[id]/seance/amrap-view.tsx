@@ -55,7 +55,7 @@ export function AmrapView({ state, timeline, roundsCompleted, onAddRound, onRemo
           type="button"
           onClick={onRemoveRound}
           disabled={roundsCompleted === 0}
-          className="text-xs text-muted-foreground underline disabled:opacity-40"
+          className="px-4 py-3 text-xs text-muted-foreground underline disabled:opacity-40"
         >
           Retirer un tour
         </button>

@@ -12,6 +12,7 @@ export function ResumeBanner({ programId }: { programId: string }) {
 
   useEffect(() => {
     const snapshot = loadLiveState(programId)
+    // localStorage ne se lit qu'après l'hydratation, sinon le rendu SSR ne correspond pas
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setStatus(snapshot ? (snapshot.finished ? "done" : "running") : "none")
     void drainOutbox()

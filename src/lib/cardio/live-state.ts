@@ -1,3 +1,5 @@
+import { LOCAL_SNAPSHOT_MAX_AGE_MS } from "./limits"
+
 export type LiveSnapshot = {
   localSessionId: string
   startedAtMs: number
@@ -37,7 +39,12 @@ export function loadLiveState(programId: string): LiveSnapshot | null {
     const raw = window.localStorage.getItem(KEY_PREFIX + programId)
     if (!raw) return null
     const parsed: unknown = JSON.parse(raw)
-    return isSnapshot(parsed) ? parsed : null
+    if (!isSnapshot(parsed)) return null
+    if (Date.now() - parsed.startedAtMs > LOCAL_SNAPSHOT_MAX_AGE_MS) {
+      window.localStorage.removeItem(KEY_PREFIX + programId)
+      return null
+    }
+    return parsed
   } catch {
     return null
   }

@@ -17,7 +17,12 @@ import {
 import { detectCue, playCue, requestWakeLock, unlockAudio } from "@/lib/cardio/cues"
 import { clearLiveState, loadLiveState, saveLiveState } from "@/lib/cardio/live-state"
 import { formatClock, formatStepUnit } from "@/lib/cardio/format"
-import { MAX_ELAPSED_SECONDS, MAX_EXTRA_REPS, MAX_ROUNDS } from "@/lib/cardio/limits"
+import {
+  LOCAL_SNAPSHOT_MAX_AGE_MS,
+  MAX_ELAPSED_SECONDS,
+  MAX_EXTRA_REPS,
+  MAX_ROUNDS,
+} from "@/lib/cardio/limits"
 import { drainOutbox, getSyncStatus, onOutboxChange, queueSaveCardioSession } from "@/lib/offline/outbox"
 import { PhasedView } from "./phased-view"
 import { AmrapView } from "./amrap-view"
@@ -146,6 +151,7 @@ export function CardioLive({ wod }: { wod: CardioLiveWod }) {
 
   const finishSession = useCallback(
     (result: Finished) => {
+      setShowQuit(false)
       setFinished(result)
       setRoundsInput(roundsCompleted)
       setScreen("done")
@@ -183,7 +189,10 @@ export function CardioLive({ wod }: { wod: CardioLiveWod }) {
     }
     void acquire()
     const onVisible = () => {
-      if (document.visibilityState === "visible") void acquire()
+      if (document.visibilityState === "visible") {
+        unlockAudio()
+        void acquire()
+      }
     }
     document.addEventListener("visibilitychange", onVisible)
     return () => {
@@ -262,6 +271,10 @@ export function CardioLive({ wod }: { wod: CardioLiveWod }) {
       setSaveError("Durée trop longue pour être enregistrée (6 h maximum). Abandonne cette séance.")
       return
     }
+    if (Date.now() - clock.startedAtMs > LOCAL_SNAPSHOT_MAX_AGE_MS) {
+      setSaveError("Séance trop ancienne pour être enregistrée. Abandonne-la.")
+      return
+    }
     setSaving(true)
     setSaveError(null)
     const isAmrap = wod.format === "AMRAP"
@@ -292,13 +305,13 @@ export function CardioLive({ wod }: { wod: CardioLiveWod }) {
     syncStatus === null
       ? "Enregistrement…"
       : syncStatus.hasFailed
-        ? "⚠️ Synchronisation bloquée — reconnecte-toi. Ton résultat est gardé sur cet appareil."
+        ? "⚠️ Synchronisation bloquée. Ton résultat est gardé sur cet appareil ; vérifie ta connexion à ton compte."
         : syncStatus.pendingCount > 0
           ? "⏳ Résultat gardé sur cet appareil, en attente de synchro."
           : "✅ Séance enregistrée."
 
   return (
-    <div className="mx-auto max-w-lg space-y-6 pb-24">
+    <div className="mx-auto max-w-lg space-y-6 pb-24" onPointerDown={() => unlockAudio()}>
       <div className="flex items-center gap-3">
         <span className="text-3xl" aria-hidden="true">{wod.image ?? "🔥"}</span>
         <div>

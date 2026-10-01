@@ -3,7 +3,12 @@
 import { headers } from "next/headers"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { MAX_ELAPSED_SECONDS, MAX_ROUNDS, MAX_EXTRA_REPS } from "@/lib/cardio/limits"
+import {
+  MAX_ELAPSED_SECONDS,
+  MAX_ROUNDS,
+  MAX_EXTRA_REPS,
+  MAX_SESSION_AGE_MS,
+} from "@/lib/cardio/limits"
 
 export type SaveCardioSessionInput = {
   programId: string
@@ -14,7 +19,6 @@ export type SaveCardioSessionInput = {
   extraReps: number | null
 }
 
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
 const FIVE_MINUTES_MS = 5 * 60 * 1000
 
 export async function saveCardioSession(
@@ -28,6 +32,7 @@ export async function saveCardioSession(
   const existing = await prisma.userCardioSession.findUnique({ where: { clientRequestId } })
   if (existing) return
 
+  if (typeof input.programId !== "string" || !input.programId) throw new Error("WOD introuvable")
   const program = await prisma.cardioProgram.findFirst({
     where: { id: input.programId, OR: [{ userId: null }, { userId: session.user.id }] },
     select: { format: true },
@@ -42,7 +47,7 @@ export async function saveCardioSession(
   if (startedAt.getTime() > completedAt.getTime()) throw new Error("Dates incohérentes")
   const now = Date.now()
   for (const date of [startedAt, completedAt]) {
-    if (date.getTime() < now - THIRTY_DAYS_MS || date.getTime() > now + FIVE_MINUTES_MS) {
+    if (date.getTime() < now - MAX_SESSION_AGE_MS || date.getTime() > now + FIVE_MINUTES_MS) {
       throw new Error("Date hors limites")
     }
   }
