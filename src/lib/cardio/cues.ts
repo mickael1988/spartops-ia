@@ -40,7 +40,7 @@ export function unlockAudio(): void {
       (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
     if (!Ctor) return
     if (!audioContext) audioContext = new Ctor()
-    if (audioContext.state === "suspended") void audioContext.resume()
+    if (audioContext.state !== "running") void audioContext.resume()
   } catch {
     // audio indisponible : la séance continue sans son
   }

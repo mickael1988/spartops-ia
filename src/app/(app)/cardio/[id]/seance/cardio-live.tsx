@@ -217,6 +217,7 @@ export function CardioLive({ wod }: { wod: CardioLiveWod }) {
   }
 
   function togglePause() {
+    unlockAudio()
     if (!clock) return
     const t = Date.now()
     setClock(clock.pausedAtMs === null ? pauseClock(clock, t) : resumeClock(clock, t))
@@ -224,12 +225,24 @@ export function CardioLive({ wod }: { wod: CardioLiveWod }) {
   }
 
   function finishStopwatch() {
+    unlockAudio()
     if (!clock) return
     const t = Date.now()
     finishSession({ atMs: t, elapsedMs: computeElapsedMs(clock, t) })
   }
 
+  function addRound() {
+    unlockAudio()
+    setRoundsCompleted((n) => n + 1)
+  }
+
+  function removeRound() {
+    unlockAudio()
+    setRoundsCompleted((n) => Math.max(0, n - 1))
+  }
+
   function toggleStep(stepIndex: number) {
+    unlockAudio()
     setCheckedSteps((steps) =>
       steps.includes(stepIndex) ? steps.filter((s) => s !== stepIndex) : [...steps, stepIndex]
     )
@@ -348,8 +361,8 @@ export function CardioLive({ wod }: { wod: CardioLiveWod }) {
               state={state}
               timeline={timeline}
               roundsCompleted={roundsCompleted}
-              onAddRound={() => setRoundsCompleted((n) => n + 1)}
-              onRemoveRound={() => setRoundsCompleted((n) => Math.max(0, n - 1))}
+              onAddRound={addRound}
+              onRemoveRound={removeRound}
             />
           )}
           {state.kind === "stopwatch" && timeline.kind === "stopwatch" && (
