@@ -19,7 +19,10 @@ export function IntroVideo() {
   const [phase, setPhase] = useState<Phase>("pending")
   const [muted, setMuted] = useState(false)
   const [needsTap, setNeedsTap] = useState(false)
+  const [ready, setReady] = useState(false)
+  const [failed, setFailed] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const blobUrlRef = useRef<string | null>(null)
 
   // Affichée une fois par jour et par appareil, ou à la demande avec ?intro=1
   useEffect(() => {
@@ -30,7 +33,7 @@ export function IntroVideo() {
       // stockage indisponible : on montre l'intro
     }
     const forced = new URLSearchParams(window.location.search).get("intro") === "1"
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- lecture de localStorage après l'hydratation (évite un écart SSR/client)
+    // lecture de localStorage après l'hydratation (évite un écart SSR/client)
     setPhase(forced || !seen ? "visible" : "hidden")
   }, [])
 
@@ -75,6 +78,15 @@ export function IntroVideo() {
     }
   }, [phase, dismiss])
 
+  // Libère le blob éventuel quand l'intro se ferme
+  useEffect(() => {
+    if (phase !== "hidden") return
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current)
+      blobUrlRef.current = null
+    }
+  }, [phase])
+
   if (phase !== "visible") return null
 
   // La vidéo ne doit jamais bloquer l'app (hors-ligne, fichier absent) : on ferme sans la marquer vue
@@ -89,13 +101,41 @@ export function IntroVideo() {
     setMuted(video.muted)
   }
 
-  function startManually() {
+  // Lancement par un tap : avec le son, sinon muet, sinon en téléchargeant le fichier en
+  // entier (lecture depuis un blob, qui évite les requêtes Range), sinon message d'erreur
+  async function startManually() {
     const video = videoRef.current
     if (!video) return
-    video
-      .play()
-      .then(() => setNeedsTap(false))
-      .catch(() => {})
+    setFailed(false)
+    video.muted = false
+    setMuted(false)
+    try {
+      await video.play()
+      setNeedsTap(false)
+      return
+    } catch {
+      video.muted = true
+      setMuted(true)
+    }
+    try {
+      await video.play()
+      setNeedsTap(false)
+      return
+    } catch {
+      // on tente le blob
+    }
+    try {
+      const response = await fetch(VIDEO_SRC, { cache: "no-store" })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const url = URL.createObjectURL(await response.blob())
+      blobUrlRef.current = url
+      video.src = url
+      await video.play()
+      setNeedsTap(false)
+    } catch (err) {
+      console.error("[intro-video]", err)
+      setFailed(true)
+    }
   }
 
   return (
@@ -111,14 +151,27 @@ export function IntroVideo() {
         className="h-full w-full object-contain"
         playsInline
         preload="auto"
+        onPlaying={() => setReady(true)}
         onEnded={dismiss}
         onError={skipOnError}
       />
 
+      {!ready && !needsTap && !failed && (
+        <p className="absolute text-sm text-white/70" aria-live="polite">
+          Chargement…
+        </p>
+      )}
+
+      {failed && (
+        <p role="alert" className="absolute max-w-xs px-6 text-center text-sm text-white">
+          Impossible de lire la vidéo sur cet appareil. Appuie sur « Passer » pour continuer.
+        </p>
+      )}
+
       {needsTap && (
         <button
           type="button"
-          onClick={startManually}
+          onClick={() => void startManually()}
           className="absolute rounded-full px-8 py-4 text-lg font-bold text-white"
           style={{ background: "linear-gradient(to right, #3F5EFB, #F50535)" }}
         >

@@ -73,16 +73,6 @@ const runtimeCaching = [
     }),
   },
   {
-    matcher: /\.(?:mp4|webm)$/i,
-    handler: new CacheFirst({
-      cacheName: "static-video-assets",
-      plugins: [
-        new ExpirationPlugin({ maxEntries: 32, maxAgeSeconds: 1440 * 60, maxAgeFrom: "last-used" }),
-        new RangeRequestsPlugin(),
-      ],
-    }),
-  },
-  {
     matcher: /\.(?:js)$/i,
     handler: new StaleWhileRevalidate({
       cacheName: "static-js-assets",
@@ -98,8 +88,11 @@ const runtimeCaching = [
   },
   // Tout le reste (pages HTML, réponses RSC, /api/*, cross-origin) : jamais
   // mis en cache, toujours re-vérifié par le serveur — contenu personnalisé.
+  // L'intro vidéo (/intro/) n'est volontairement PAS gérée par le Service Worker :
+  // iOS Safari est capricieux avec les requêtes Range qui transitent par un SW,
+  // le navigateur la charge donc directement.
   {
-    matcher: /.*/i,
+    matcher: ({ url }: { url: URL }) => !url.pathname.startsWith("/intro/"),
     handler: new NetworkOnly(),
   },
 ]
