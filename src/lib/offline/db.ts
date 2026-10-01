@@ -26,7 +26,12 @@ export type LocalSetLog = {
   rpe: number | null
 }
 
-export type OutboxActionType = "startWorkout" | "completeSet" | "finishWorkout" | "rateAndFinishWorkout"
+export type OutboxActionType =
+  | "startWorkout"
+  | "completeSet"
+  | "finishWorkout"
+  | "rateAndFinishWorkout"
+  | "saveCardioSession"
 
 export type OutboxEntry = {
   outboxId: string

@@ -10,6 +10,7 @@ import {
   finishWorkout,
   rateAndFinishWorkout,
 } from "@/app/(app)/musculation/seance/actions"
+import { saveCardioSession, type SaveCardioSessionInput } from "@/app/(app)/cardio/actions"
 
 type CompleteSetPayload = {
   workoutExerciseId: string
@@ -23,6 +24,7 @@ type CompleteSetPayload = {
 type StartWorkoutPayload = { workoutId: string }
 type FinishWorkoutPayload = { workoutId: string; completedAt: string }
 type RateAndFinishWorkoutPayload = { workoutId: string; rating: number | null; comment: string; completedAt: string }
+type SaveCardioSessionPayload = SaveCardioSessionInput
 
 const listeners = new Set<() => void>()
 
@@ -147,6 +149,13 @@ export async function queueRateAndFinishWorkout(
   } satisfies RateAndFinishWorkoutPayload)
 }
 
+export async function queueSaveCardioSession(
+  localSessionId: string,
+  input: SaveCardioSessionInput
+): Promise<void> {
+  await enqueue(localSessionId, "saveCardioSession", input satisfies SaveCardioSessionPayload)
+}
+
 let drainPromise: Promise<void> | null = null
 
 export function drainOutbox(): Promise<void> {
@@ -192,6 +201,11 @@ async function syncEntry(entry: OutboxEntry): Promise<boolean> {
       case "rateAndFinishWorkout": {
         const p = entry.payload as RateAndFinishWorkoutPayload
         await rateAndFinishWorkout(p.workoutId, p.rating, p.comment, new Date(p.completedAt))
+        break
+      }
+      case "saveCardioSession": {
+        const p = entry.payload as SaveCardioSessionPayload
+        await saveCardioSession(p, entry.outboxId)
         break
       }
     }
