@@ -15,7 +15,7 @@ export default async function Home() {
       {/* Desktop : deux spartans qui se regardent */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/spartan-hero.png"
+        src="/spartan-hero.webp"
         alt=""
         aria-hidden="true"
         className="absolute top-0 left-0 h-full w-auto hidden lg:block"
@@ -26,7 +26,7 @@ export default async function Home() {
       />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/spartan-hero.png"
+        src="/spartan-hero.webp"
         alt=""
         aria-hidden="true"
         className="absolute top-0 right-0 h-full w-auto hidden lg:block"
@@ -39,7 +39,7 @@ export default async function Home() {
       {/* Mobile : un seul spartan centré */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/spartan-hero.png"
+        src="/spartan-hero.webp"
         alt=""
         aria-hidden="true"
         className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-auto lg:hidden"

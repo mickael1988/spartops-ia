@@ -7,7 +7,7 @@ export default function AuthLayout({
     <div
       className="relative flex min-h-screen items-center justify-center overflow-hidden"
       style={{
-        backgroundImage: "url('/spartan-hero.png')",
+        backgroundImage: "url('/spartan-hero.webp')",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}

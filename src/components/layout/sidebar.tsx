@@ -71,7 +71,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       {/* Logo */}
       <div className="flex items-center gap-2 px-6 py-5 border-b">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/spartan-hero.png" alt="SpartOps" className="h-8 w-8 object-contain" />
+        <img src="/spartan-hero.webp" alt="SpartOps" className="h-8 w-8 object-contain" />
         <span className="text-xl font-bold">SpartOps</span>
       </div>
 

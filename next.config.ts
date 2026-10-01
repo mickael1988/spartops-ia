@@ -10,7 +10,7 @@ const withSerwist = withSerwistInit({
   // Range, ce qui casse la lecture vidéo sur iOS Safari (et pèse 8,5 Mo à l'installation
   // du SW). Les patterns "!..." ne sont pas supportés ici : on liste donc les types à
   // précharger. À compléter si un nouveau type de fichier léger est ajouté à public/.
-  globPublicPatterns: ["*.png", "*.svg", "*.json", "groups/**/*", "icons/**/*"],
+  globPublicPatterns: ["*.png", "*.webp", "*.svg", "*.json", "groups/**/*", "icons/**/*"],
 })
 
 const nextConfig: NextConfig = {
