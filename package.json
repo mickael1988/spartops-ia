@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node prisma/check-empty-cardio-sessions.mjs && npx prisma db push --accept-data-loss && next build --webpack",
+    "build": "next build --webpack",
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
