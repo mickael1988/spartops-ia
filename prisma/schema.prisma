@@ -264,13 +264,17 @@ model CardioStep {
 }
 
 model UserCardioSession {
-  id          String        @id @default(cuid())
-  userId      String
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  programId   String
-  program     CardioProgram @relation(fields: [programId], references: [id])
-  completedAt DateTime      @default(now())
-  durationMin Int
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  programId       String
+  program         CardioProgram @relation(fields: [programId], references: [id])
+  startedAt       DateTime
+  completedAt     DateTime
+  elapsedSeconds  Int
+  roundsCompleted Int?
+  extraReps       Int?
+  clientRequestId String?       @unique
 }
 
 // ==========================================
