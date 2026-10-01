@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { getSession } from "@/lib/session"
 import { Header } from "@/components/layout/header"
 import { SidebarContent } from "@/components/layout/sidebar"
+import { IntroVideo } from "@/components/intro-video"
 
 export default async function AppLayout({
   children,
@@ -16,6 +17,7 @@ export default async function AppLayout({
 
   return (
     <div className="relative flex min-h-screen">
+      <IntroVideo />
       {/* Desktop : deux spartans qui se regardent */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
