@@ -17,7 +17,7 @@ function today(): string {
 
 export function IntroVideo() {
   const [phase, setPhase] = useState<Phase>("pending")
-  const [muted, setMuted] = useState(false)
+  const [muted, setMuted] = useState(true)
   const [needsTap, setNeedsTap] = useState(false)
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
@@ -46,21 +46,34 @@ export function IntroVideo() {
     setPhase("hidden")
   }, [])
 
-  // Lecture automatique avec le son ; si le navigateur le refuse (pas de geste récent),
-  // on relance en muet avec le bouton « Activer le son » ; en dernier recours, un bouton
+  // Lecture automatique d'abord en muet (la seule que iOS accepte sans geste, hors mode
+  // économie d'énergie), puis on rallume le son si le navigateur l'autorise (activation
+  // utilisateur récente : cas de PC/Android juste après la connexion). Sinon : bouton « Activer le son ».
   useEffect(() => {
     if (phase !== "visible") return
     const video = videoRef.current
     if (!video) return
-    video.muted = false
+    video.defaultMuted = true
+    video.muted = true
+    let timer: number | undefined
     video
       .play()
-      .catch(() => {
-        video.muted = true
-        setMuted(true)
-        return video.play()
+      .then(() => {
+        const activation = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation
+        if (!activation?.hasBeenActive) return
+        video.muted = false
+        setMuted(false)
+        // si le navigateur met la lecture en pause à cause du son, on repasse en muet
+        timer = window.setTimeout(() => {
+          if (video.paused && !video.ended) {
+            video.muted = true
+            setMuted(true)
+            video.play().catch(() => setNeedsTap(true))
+          }
+        }, 400)
       })
       .catch(() => setNeedsTap(true))
+    return () => window.clearTimeout(timer)
   }, [phase])
 
   // Pas de défilement derrière l'intro, Échap pour fermer
@@ -149,6 +162,8 @@ export function IntroVideo() {
         ref={videoRef}
         src={VIDEO_SRC}
         className="h-full w-full object-contain"
+        autoPlay
+        muted
         playsInline
         preload="auto"
         onPlaying={() => setReady(true)}
