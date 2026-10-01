@@ -2,6 +2,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { ChevronRight } from "lucide-react"
 import { prisma } from "@/lib/prisma"
+import { ResumeBanner } from "./resume-banner"
 
 const LEVEL_LABELS = { DEBUTANT: "Débutant", INTERMEDIAIRE: "Intermédiaire", AVANCE: "Avancé" } as const
 const FORMAT_LABELS = { CIRCUIT: "Circuit", AMRAP: "AMRAP", EMOM: "EMOM", FOR_TIME: "For Time" } as const
@@ -69,6 +70,8 @@ export default async function CardioWodPage({
         </div>
       </div>
 
+      <ResumeBanner programId={wod.id} />
+
       {/* Déroulé des étapes */}
       <div className="space-y-2">
         {wod.steps.map((step) => (
@@ -87,19 +90,13 @@ export default async function CardioWodPage({
         ))}
       </div>
 
-      {/* Bouton Démarrer — non branché à cette étape */}
-      <div className="space-y-2">
-        <button
-          disabled
-          title="Bientôt disponible"
-          aria-describedby="start-hint"
-          className="w-full rounded-2xl py-4 text-lg font-bold text-white opacity-50 cursor-not-allowed"
-          style={{ background: "linear-gradient(to right, #3F5EFB, #F50535)" }}
-        >
-          Démarrer
-        </button>
-        <p id="start-hint" className="text-center text-xs text-muted-foreground">Bientôt disponible</p>
-      </div>
+      <Link
+        href={`/cardio/${wod.id}/seance`}
+        className="block w-full rounded-2xl py-4 text-center text-lg font-bold text-white"
+        style={{ background: "linear-gradient(to right, #3F5EFB, #F50535)" }}
+      >
+        Démarrer
+      </Link>
     </div>
   )
 }
