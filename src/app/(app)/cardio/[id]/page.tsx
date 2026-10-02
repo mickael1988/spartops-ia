@@ -2,10 +2,9 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { ChevronRight } from "lucide-react"
 import { prisma } from "@/lib/prisma"
+import { FormatBadge } from "../format-badge"
+import { CaloriesChip, ClassicChip, DurationChip, EquipmentChip, LevelChip } from "../wod-meta"
 import { ResumeBanner } from "./resume-banner"
-
-const LEVEL_LABELS = { DEBUTANT: "Débutant", INTERMEDIAIRE: "Intermédiaire", AVANCE: "Avancé" } as const
-const FORMAT_LABELS = { CIRCUIT: "Circuit", AMRAP: "AMRAP", EMOM: "EMOM", FOR_TIME: "For Time" } as const
 
 const DURATION_LABELS = {
   CIRCUIT: (n: number) => `Durée totale : ${n} min`,
@@ -60,13 +59,13 @@ export default async function CardioWodPage({
           <h1 className="text-3xl font-bold">{wod.name}</h1>
         </div>
         <p className="text-muted-foreground mt-1">{wod.description}</p>
-        <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground">
-          <span className="font-semibold text-primary">{FORMAT_LABELS[wod.format]}</span>
-          {wod.isBenchmark && <span className="font-semibold text-[#F50535]">Classique</span>}
-          <span>{LEVEL_LABELS[wod.level]}</span>
-          <span>{DURATION_LABELS[wod.format](wod.durationMin)}</span>
-          <span>{wod.equipment ?? "Sans matériel"}</span>
-          {wod.calories != null && <span>~{wod.calories} kcal</span>}
+        <div className="flex flex-wrap gap-2 mt-3">
+          <FormatBadge format={wod.format} withHint />
+          {wod.isBenchmark && <ClassicChip />}
+          <LevelChip level={wod.level} />
+          <DurationChip>{DURATION_LABELS[wod.format](wod.durationMin)}</DurationChip>
+          <EquipmentChip equipment={wod.equipment} />
+          {wod.calories != null && <CaloriesChip calories={wod.calories} />}
         </div>
       </div>
 

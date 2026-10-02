@@ -1,6 +1,10 @@
 import Link from "next/link"
+import { LayoutGrid, Layers, Trophy, type LucideIcon } from "lucide-react"
 import { prisma } from "@/lib/prisma"
+import { cn } from "@/lib/utils"
 import { WodCard } from "./wod-card"
+import { FORMAT_CONFIG } from "./format-badge"
+import { EQUIPMENT_ICONS, LEVEL_CONFIG } from "./wod-meta"
 
 const FORMATS = [
   { value: "CIRCUIT", label: "Circuit" },
@@ -8,6 +12,8 @@ const FORMATS = [
   { value: "EMOM", label: "EMOM" },
   { value: "FOR_TIME", label: "For Time" },
 ] as const
+
+const GRADIENT = "linear-gradient(to right, #3F5EFB, #F50535)"
 
 const LEVELS = [
   { value: "DEBUTANT", label: "Débutant" },
@@ -18,23 +24,31 @@ const LEVELS = [
 function FilterPill({
   href,
   active,
+  icon: Icon,
+  compact = false,
   children,
 }: {
   href: string
   active: boolean
+  icon?: LucideIcon
+  /** Mobile : padding réduit et icône masquée, pour tenir sur une seule ligne. */
+  compact?: boolean
   children: React.ReactNode
 }) {
   return (
     <Link
       href={href}
       aria-current={active ? "true" : undefined}
-      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+      className={cn(
+        "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border py-1 text-xs font-medium transition-colors",
+        compact ? "px-2 sm:px-3" : "px-3",
         active
-          ? "text-white border-transparent"
-          : "text-muted-foreground hover:border-primary hover:text-primary"
-      }`}
-      style={active ? { background: "linear-gradient(to right, #3F5EFB, #F50535)" } : undefined}
+          ? "text-white border-transparent font-semibold shadow-sm"
+          : "bg-muted/40 text-foreground/70 border-border hover:border-primary hover:text-primary",
+      )}
+      style={active ? { background: GRADIENT } : undefined}
     >
+      {Icon && <Icon className={cn("size-3.5 shrink-0", compact && "hidden sm:block")} aria-hidden="true" />}
       {children}
     </Link>
   )
@@ -43,23 +57,26 @@ function FilterPill({
 function TabLink({
   href,
   active,
+  icon: Icon,
   children,
 }: {
   href: string
   active: boolean
+  icon: LucideIcon
   children: React.ReactNode
 }) {
   return (
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className={`rounded-xl border px-4 py-2 text-sm font-semibold transition-colors ${
+      className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-colors ${
         active
           ? "text-white border-transparent"
           : "text-muted-foreground hover:border-primary hover:text-primary"
       }`}
-      style={active ? { background: "linear-gradient(to right, #3F5EFB, #F50535)" } : undefined}
+      style={active ? { background: GRADIENT } : undefined}
     >
+      <Icon className="size-4" aria-hidden="true" />
       {children}
     </Link>
   )
@@ -113,31 +130,48 @@ export default async function CardioPage({
       </div>
 
       <nav aria-label="Catalogue" className="flex gap-2">
-        <TabLink href="/cardio" active={tab === "catalogue"}>Nos WOD</TabLink>
-        <TabLink href="/cardio?tab=classiques" active={tab === "classiques"}>Classiques</TabLink>
+        <TabLink href="/cardio" active={tab === "catalogue"} icon={LayoutGrid}>Nos WOD</TabLink>
+        <TabLink href="/cardio?tab=classiques" active={tab === "classiques"} icon={Trophy}>Classiques</TabLink>
       </nav>
 
       <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap gap-2">
-          <FilterPill href={buildHref({ format: undefined })} active={!validFormat}>Tous les formats</FilterPill>
+        <div className="flex flex-nowrap gap-1 sm:gap-2 overflow-x-auto">
+          <FilterPill href={buildHref({ format: undefined })} active={!validFormat} icon={Layers} compact>
+            Tous les formats
+          </FilterPill>
           {FORMATS.map((f) => (
-            <FilterPill key={f.value} href={buildHref({ format: f.value })} active={validFormat === f.value}>
+            <FilterPill
+              key={f.value}
+              href={buildHref({ format: f.value })}
+              active={validFormat === f.value}
+              icon={FORMAT_CONFIG[f.value].icon}
+              compact
+            >
               {f.label}
             </FilterPill>
           ))}
         </div>
         <div className="flex flex-wrap gap-2">
-          <FilterPill href={buildHref({ level: undefined })} active={!validLevel}>Tous les niveaux</FilterPill>
+          <FilterPill href={buildHref({ level: undefined })} active={!validLevel} icon={Layers}>Tous les niveaux</FilterPill>
           {LEVELS.map((l) => (
-            <FilterPill key={l.value} href={buildHref({ level: l.value })} active={validLevel === l.value}>
+            <FilterPill
+              key={l.value}
+              href={buildHref({ level: l.value })}
+              active={validLevel === l.value}
+              icon={LEVEL_CONFIG[l.value].icon}
+            >
               {l.label}
             </FilterPill>
           ))}
         </div>
         <div className="flex flex-wrap gap-2">
-          <FilterPill href={buildHref({ equipment: undefined })} active={!validEquipment}>Tout matériel</FilterPill>
-          <FilterPill href={buildHref({ equipment: "sans" })} active={validEquipment === "sans"}>Sans matériel</FilterPill>
-          <FilterPill href={buildHref({ equipment: "avec" })} active={validEquipment === "avec"}>Avec matériel</FilterPill>
+          <FilterPill href={buildHref({ equipment: undefined })} active={!validEquipment} icon={Layers}>Tout matériel</FilterPill>
+          <FilterPill href={buildHref({ equipment: "sans" })} active={validEquipment === "sans"} icon={EQUIPMENT_ICONS.sans}>
+            Sans matériel
+          </FilterPill>
+          <FilterPill href={buildHref({ equipment: "avec" })} active={validEquipment === "avec"} icon={EQUIPMENT_ICONS.avec}>
+            Avec matériel
+          </FilterPill>
         </div>
       </div>
 

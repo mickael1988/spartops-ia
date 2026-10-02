@@ -27,6 +27,7 @@ import { drainOutbox, getSyncStatus, onOutboxChange, queueSaveCardioSession } fr
 import { PhasedView } from "./phased-view"
 import { AmrapView } from "./amrap-view"
 import { ForTimeView } from "./for-time-view"
+import { FormatBadge } from "../../format-badge"
 
 export type CardioLiveWod = {
   id: string
@@ -39,13 +40,6 @@ export type CardioLiveWod = {
 
 type Screen = "loading" | "ready" | "countdown" | "running" | "done" | "saved"
 type Finished = { atMs: number; elapsedMs: number }
-
-const FORMAT_LABELS: Record<WodFormat, string> = {
-  CIRCUIT: "Circuit",
-  AMRAP: "AMRAP",
-  EMOM: "EMOM",
-  FOR_TIME: "For Time",
-}
 
 const GRADIENT = "linear-gradient(to right, #3F5EFB, #F50535)"
 
@@ -316,7 +310,7 @@ export function CardioLive({ wod }: { wod: CardioLiveWod }) {
         <span className="text-3xl" aria-hidden="true">{wod.image ?? "🔥"}</span>
         <div>
           <h1 className="text-xl font-bold leading-tight">{wod.name}</h1>
-          <p className="text-xs text-muted-foreground">{FORMAT_LABELS[wod.format]}</p>
+          <FormatBadge format={wod.format} className="mt-1" />
         </div>
       </div>
 
